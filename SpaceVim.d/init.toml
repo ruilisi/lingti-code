@@ -1,0 +1,147 @@
+#=============================================================================
+# basic.toml --- basic configuration example for SpaceVim
+# Copyright (c) 2016-2017 Wang Shidong & Contributors
+# Author: Wang Shidong < wsdjeg at 163.com >
+# URL: https://spacevim.org
+# License: GPLv3
+#=============================================================================
+
+# All SpaceVim option below [option] section
+[options]
+    # set spacevim theme. by default colorscheme layer is not loaded,
+    # if you want to use more colorscheme, please load the colorscheme
+    # layer
+    colorscheme = "NeoSolarized"
+    colorscheme_bg = "dark"
+
+    # Disable guicolors in basic mode, many terminal do not support 24bit
+    # true colors
+    enable_guicolors = false
+    guifont = "SauceCodePro Nerd Font Mono:h11"
+    # Disable statusline separator, if you want to use other value, please
+    # install nerd fonts
+    statusline_separator = "nil"
+    statusline_inactive_separator = "bar"
+    buffer_index_type = 4
+    windows_index_type = 3
+    enable_tabline_filetype_icon = false
+    enable_statusline_mode = false
+    statusline_unicode_symbols = false
+    # Enable vim compatible mode, avoid changing origin vim key bindings
+    vimcompatible = true
+    filemanager = "nerdtree"
+		lint_engine = 'ale'
+    bootstrap_before = "paiyou#before"
+    bootstrap_after = "paiyou#after"
+    project_auto_root = true
+    project_rooter_outermost = false
+    project_rooter_patterns = ['.git/', '_darcs/', '.hg/', '.bzr/', '.svn/', '!packages/']
+    expandtab = true
+    tabstop = 4
+    shiftwidth = 4
+    softtabstop = 4
+    autocomplete_method = "nvim-cmp"
+    gopls_env = { CGO_ENABLED = "1" }
+
+# Enable autocomplete layer
+[[layers]]
+name = 'autocomplete'
+auto-completion-delay = 10
+auto_completion_return_key_behavior = "complete"
+auto_completion_tab_key_behavior = "smart"
+
+[[layers]]
+name = 'shell'
+default_position = 'top'
+default_height = 30
+
+[[layers]]
+name = "lang#ruby"
+format_on_save = true
+enabled_linters = []
+
+[[layers]]
+name = "tmux"
+
+[[layers]]
+name = "lang#javascript"
+auto_fix = true
+enable_flow_syntax = true
+format_on_save = true
+
+[[layers]]
+name = "lang#typescript"
+auto_fix = true
+
+[[layers]]
+name = "colorscheme"
+
+[[layers]]
+name = "VersionControl"
+
+[[layers]]
+name = "checkers"
+enable_neomake = false
+open_error_list = 0
+enable_ale = true
+
+[[layers]]
+name = "git"
+
+[[layers]]
+name = "lang#markdown"
+
+[[layers]]
+name = "lang#go"
+format_on_save = true
+enabled_linters = ["staticcheck", "govet"]
+
+[[layers]]
+name = "lang#c"
+
+[[layers]]
+name = "format"
+auto_fix = true
+format_on_save = true
+
+[[layers]]
+name = "lang#python"
+
+[[layers]]
+name = "tools"
+
+[[custom_plugins]]
+repo = "tveskag/nvim-blame-line.git"
+merged = false
+
+[[custom_plugins]]
+repo = "zivyangll/git-blame.vim"
+
+[[custom_plugins]]
+repo = "github/copilot.vim"
+
+[[layers]]
+name = "gtags"
+gtagslabel = "pygments"
+
+[[layers]]
+name = "lang#rust"
+
+[[layers]]
+name = "lsp"
+enabled_clients = ['pyright', "gopls"]
+
+[layers.override_cmd]
+gopls = ['gopls', '-remote=auto']
+
+[[layers]]
+name = "leaderf"
+
+[[layers]]
+name = 'core'
+filetree_show_hidden = true
+enable_smooth_scrolling = true
+
+
+[[layers]]
+name = "bookmarks"
