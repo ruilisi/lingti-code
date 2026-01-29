@@ -10,6 +10,7 @@ INSTALL_STEPS = [
   { name: 'asdf',          desc: 'ASDF version manager' },
   { name: 'claude_code',   desc: 'Claude Code CLI' },
   { name: 'claude',        desc: 'Claude CLI config' },
+  { name: 'qshell',        desc: 'Qshell (Qiniu Cloud CLI)' },
   { name: 'fonts',         desc: 'Powerline fonts' },
   { name: 'term_theme',    desc: 'iTerm2 theme',         platform: :macos },
   { name: 'bundle_config', desc: 'Bundler config' },
@@ -35,6 +36,7 @@ def run_step(name)
   when 'asdf'          then Rake::Task['install_asdf'].execute
   when 'claude_code'   then Rake::Task['install_claude_code'].execute
   when 'claude'        then Rake::Task['install_claude'].execute
+  when 'qshell'        then Rake::Task['install_qshell'].execute
   when 'fonts'         then install_fonts
   when 'term_theme'    then install_term_theme
   when 'bundle_config' then run_bundle_config
