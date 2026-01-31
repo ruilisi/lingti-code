@@ -20,6 +20,7 @@
     "gopls@claude-code-lsps": true,
     "gopls-lsp@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true,
-    "ui-ux-pro-max@ui-ux-pro-max-skill": true
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }

@@ -25,3 +25,29 @@ When `SPUpdate` updates `vim-import-js`, it will try run `npm install -g import-
   npm config set registry=https://registry.npmjs.com/
   ./install.sh
   ```
+
+## `TSCloseWindow` error: "Channel doesn't exist" on CursorMoved in TypeScript files
+```
+Error detected while processing CursorMoved Autocommands for "*.ts"..function TSCloseWindow[1]..remote#define#notify:
+line    6:
+E475: Invalid argument: Channel doesn't exist
+```
+This error indicates a Neovim remote plugin (likely related to TypeScript tooling) has lost its RPC channel connection. The `TSCloseWindow` function is trying to communicate with a plugin that has crashed or wasn't properly initialized.
+
+* Resolution steps
+  1. Add `tsserver` to LSP enabled clients in `SpaceVim.d/init.toml`:
+     ```toml
+     [[layers]]
+     name = "lsp"
+     enabled_clients = ['pyright', "gopls", "tsserver"]
+     ```
+  2. Install TypeScript language server globally:
+     ```bash
+     npm install -g typescript typescript-language-server
+     ```
+  3. Regenerate remote plugins - run `:UpdateRemotePlugins` in Neovim, then restart
+  4. If the above doesn't work, clear the remote plugin cache:
+     ```bash
+     rm -rf ~/.local/share/nvim/rplugin.vim
+     ```
+     Then reopen Neovim and run `:UpdateRemotePlugins` again
