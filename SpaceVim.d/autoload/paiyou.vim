@@ -16,6 +16,22 @@ function! paiyou#after() abort
         \   'ruby': ['rubocop'],
         \}
   let g:ale_fix_on_save = 1
+
+  " LSP keybindings for TypeScript/JavaScript (like Go)
+  " gd         - go to definition
+  " K          - hover documentation
+  " gr         - go to references
+  " gi         - go to implementation
+  " <leader>rn - rename symbol
+  augroup typescript_lsp
+    autocmd!
+    autocmd FileType typescript,typescriptreact,javascript,javascriptreact
+          \ nnoremap <buffer> <silent> gd :lua vim.lsp.buf.definition()<CR>|
+          \ nnoremap <buffer> <silent> K :lua vim.lsp.buf.hover()<CR>|
+          \ nnoremap <buffer> <silent> gr :lua vim.lsp.buf.references()<CR>|
+          \ nnoremap <buffer> <silent> gi :lua vim.lsp.buf.implementation()<CR>|
+          \ nnoremap <buffer> <silent> <leader>rn :lua vim.lsp.buf.rename()<CR>
+  augroup END
   let g:ctrlp_max_files=0
   let g:neoformat_enabled_javascript = ['eslint', 'prettier']
   let g:neoformat_enabled_javascriptreact = ['eslint', 'prettier']
