@@ -41,7 +41,14 @@ _lingti_fetch_in_background() {
     local remote_head=$(git -C "$_LINGTI_DIR" rev-parse origin/main 2>/dev/null)
 
     if [[ -n "$local_head" && -n "$remote_head" && "$local_head" != "$remote_head" ]]; then
-      print -r -- "update_available" > "$_LINGTI_RESULT_FILE"
+      local ahead=$(git -C "$_LINGTI_DIR" rev-list origin/main..HEAD --count 2>/dev/null)
+      local behind=$(git -C "$_LINGTI_DIR" rev-list HEAD..origin/main --count 2>/dev/null)
+
+      if (( ahead > 0 && behind == 0 )); then
+        print -r -- "local_ahead:$ahead" > "$_LINGTI_RESULT_FILE"
+      else
+        print -r -- "update_available" > "$_LINGTI_RESULT_FILE"
+      fi
     else
       print -r -- "up_to_date" > "$_LINGTI_RESULT_FILE"
     fi
@@ -63,6 +70,14 @@ _lingti_check_precmd() {
 
   local result=$(<"$_LINGTI_RESULT_FILE")
   rm -f "$_LINGTI_RESULT_FILE"
+
+  # Check if local is ahead of remote (PR opportunity)
+  if [[ "$result" == local_ahead:* ]]; then
+    local ahead_count="${result#local_ahead:}"
+    print -P "\n%F{magenta}[lingti]%f Your local branch is $ahead_count commit(s) ahead of origin/main."
+    print "  You can create a pull request to share your changes."
+    return
+  fi
 
   [[ "$result" == "update_available" ]] || return
 
