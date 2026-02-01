@@ -243,6 +243,11 @@ alias cnpm="npm --registry=https://registry.npm.taobao.org \
   --cache=$HOME/.npm/.cache/cnpm \
   --disturl=https://npm.taobao.org/dist \
   --userconfig=$HOME/.cnpmrc"
+
+# Install latest LTS Node.js and set as default
+node_install_lts() {
+  nvm install --lts && nvm alias default "$(nvm version)" && nvm use default && echo "$(nvm version)" >| ~/.nvmrc
+}
 alias gpo='git push origin'
 case "$OSTYPE" in
    cygwin*)
