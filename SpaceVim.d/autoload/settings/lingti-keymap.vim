@@ -322,3 +322,25 @@ nnoremap <silent> <leader>b :ToggleBlameLine<CR>
 nnoremap <silent> <leader>s ::<C-u>call gitblame#echo()<CR>
 nnoremap <silent> <leader>-- :set cmdheight&<CR>
 
+" Search word under cursor in project - show count, use ]q/[q to jump files
+function! SearchWordUnderCursorCount()
+  let l:word = expand('<cword>')
+  if empty(l:word)
+    echo "No word under cursor"
+    return
+  endif
+  " Populate quickfix silently
+  execute 'silent grep! --word-regexp ' . shellescape(l:word)
+  let l:count = len(getqflist())
+  " Set search register so n/N work in current file
+  let @/ = '\<' . l:word . '\>'
+  set hlsearch
+  if l:count == 0
+    echo "'" . l:word . "' not found"
+  else
+    copen
+    echo "'" . l:word . "' " . l:count . " matches | ]q=next [q=prev"
+  endif
+endfunction
+call SpaceVim#custom#SPC('nnoremap', ['s', 'P'], 'call SearchWordUnderCursorCount()', 'search word under cursor (count)', 1)
+
