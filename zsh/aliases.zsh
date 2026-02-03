@@ -284,3 +284,34 @@ alias delete_all_binaries="find . -type f -perm -u+x -not -path './.git/*' | xar
 
 ## grep && ag
 alias agq="ag -Q"
+
+## git with specified SSH key
+# gfr_key <key_path>: git pull --rebase with specified SSH key
+gfr_key() {
+  local key="$1"
+  if [[ -z "$key" ]]; then
+    echo "Usage: gfr_key <key_path>"
+    return 1
+  fi
+  if [[ ! -f "$key" ]]; then
+    echo "SSH key not found: $key"
+    return 1
+  fi
+  shift
+  GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes" git pull --rebase "$@"
+}
+
+# gpc_key <key_path>: git push current branch with specified SSH key
+gpc_key() {
+  local key="$1"
+  if [[ -z "$key" ]]; then
+    echo "Usage: gpc_key <key_path>"
+    return 1
+  fi
+  if [[ ! -f "$key" ]]; then
+    echo "SSH key not found: $key"
+    return 1
+  fi
+  shift
+  GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes" git push --set-upstream origin "$(git-branch-current 2>/dev/null)" "$@"
+}
