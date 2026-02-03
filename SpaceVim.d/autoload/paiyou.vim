@@ -10,6 +10,10 @@ function! paiyou#before() abort
 endfunction
 
 function! paiyou#after() abort
+  " Override SPC s P to use quickfix instead of FlyGrep
+  " Note: Must use SpaceVim#mapping#space#def (immediate) not SpaceVim#custom#SPC (queued before bootstrap_after)
+  call SpaceVim#mapping#space#def('nnoremap', ['s', 'P'], 'call SearchWordUnderCursorCount()', 'search word under cursor (quickfix)', 1)
+
   let g:ale_fixers = {
         \   'javascript': ['eslint', 'prettier'],
         \   'typescript': ['eslint', 'prettier'],

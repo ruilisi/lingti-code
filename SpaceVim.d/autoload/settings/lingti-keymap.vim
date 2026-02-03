@@ -323,24 +323,49 @@ nnoremap <silent> <leader>s ::<C-u>call gitblame#echo()<CR>
 nnoremap <silent> <leader>-- :set cmdheight&<CR>
 
 " Search word under cursor in project - show count, use ]q/[q to jump files
+" Uses ag (respects .gitignore)
 function! SearchWordUnderCursorCount()
   let l:word = expand('<cword>')
   if empty(l:word)
     echo "No word under cursor"
     return
   endif
-  " Populate quickfix silently
-  execute 'silent grep! --word-regexp ' . shellescape(l:word)
-  let l:count = len(getqflist())
+  " Use ag with word boundary, respects .gitignore
+  let l:cmd = 'ag --vimgrep --word-regexp ' . shellescape(l:word)
+  let l:results = systemlist(l:cmd)
+  " Parse results into quickfix format
+  let l:qflist = []
+  for line in l:results
+    let l:match = matchlist(line, '\v^([^:]+):(\d+):(\d+):(.*)$')
+    if !empty(l:match)
+      call add(l:qflist, {
+            \ 'filename': l:match[1],
+            \ 'lnum': str2nr(l:match[2]),
+            \ 'col': str2nr(l:match[3]),
+            \ 'text': l:match[4]
+            \ })
+    endif
+  endfor
+  call setqflist(l:qflist)
+  let l:count = len(l:qflist)
   " Set search register so n/N work in current file
   let @/ = '\<' . l:word . '\>'
   set hlsearch
   if l:count == 0
     echo "'" . l:word . "' not found"
   else
-    copen
-    echo "'" . l:word . "' " . l:count . " matches | ]q=next [q=prev"
+    botright copen
+    echo "'" . l:word . "' " . l:count . " matches | o=open&stay ]q/[q=jump"
   endif
 endfunction
-call SpaceVim#custom#SPC('nnoremap', ['s', 'P'], 'call SearchWordUnderCursorCount()', 'search word under cursor (count)', 1)
+" Note: SPC s P mapping is defined in paiyou#after() using SpaceVim#mapping#space#def
+
+" Quickfix: keep window open when selecting results
+augroup QuickfixMapping
+  autocmd!
+  " 'o' opens entry but keeps quickfix window focused
+  autocmd FileType qf nnoremap <buffer> o <CR><C-w>p
+  " 'O' opens entry and keeps quickfix visible at bottom (focus on code)
+  autocmd FileType qf nnoremap <buffer> O <CR>:botright copen<CR><C-w>p
+augroup END
 
