@@ -63,11 +63,8 @@ enabled_linters = []
 [[layers]]
 name = "tmux"
 
-[[layers]]
-name = "lang#javascript"
-auto_fix = true
-enable_flow_syntax = true
-format_on_save = true
+# Removed lang#javascript - using tsserver from LSP layer instead to avoid conflicts
+# ALE handles linting, format layer handles formatting
 
 [[layers]]
 name = "colorscheme"

@@ -12,7 +12,7 @@
 
 | Product | Description |
 |---------|-------------|
-| [lingti-code](https://code.lingti.com) | AI-enhanced development environment for global developers — **this project** (open-source) |
+| [lingti-code](https://cli.lingti.com/code) | AI-enhanced development environment for global developers — **this project** (open-source) |
 | [Lingti Game Booster](https://game.lingti.com) | Game network accelerator — reached **#13 on App Store China Top Grossing** (2020) |
 | [Lingti Router](https://router.lingti.com) | World's first router relay software with lightweight remote management, combining game acceleration and IoT control |
 | [Xiemala](https://xiemala.com) | AI-assisted online collaboration and low-code form platform for enterprise productivity |
