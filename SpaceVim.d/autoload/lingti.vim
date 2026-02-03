@@ -1,4 +1,4 @@
-function! paiyou#before() abort
+function! lingti#before() abort
   " typescript
   let g:neoformat_typescriptreact_prettier = {
         \ 'exe': 'prettier',
@@ -9,7 +9,7 @@ function! paiyou#before() abort
   let g:neoformat_enabled_ruby = ['rubocop']
 endfunction
 
-function! paiyou#after() abort
+function! lingti#after() abort
   " Override SPC s P to use quickfix instead of FlyGrep
   " Note: Must use SpaceVim#mapping#space#def (immediate) not SpaceVim#custom#SPC (queued before bootstrap_after)
   call SpaceVim#mapping#space#def('nnoremap', ['s', 'P'], 'call SearchWordUnderCursorCount()', 'search word under cursor (quickfix)', 1)

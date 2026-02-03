@@ -31,8 +31,8 @@
     vimcompatible = true
     filemanager = "nerdtree"
 		lint_engine = 'ale'
-    bootstrap_before = "paiyou#before"
-    bootstrap_after = "paiyou#after"
+    bootstrap_before = "lingti#before"
+    bootstrap_after = "lingti#after"
     project_auto_root = true
     project_rooter_outermost = false
     project_rooter_patterns = ['.git/', '_darcs/', '.hg/', '.bzr/', '.svn/', '!packages/']

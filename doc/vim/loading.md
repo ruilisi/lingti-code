@@ -105,18 +105,18 @@ guifont = "SauceCodePro Nerd Font Mono:h11"
 vimcompatible = true
 filemanager = "nerdtree"
 lint_engine = 'ale'
-bootstrap_before = "paiyou#before"    # Hook: called BEFORE layers
-bootstrap_after = "paiyou#after"      # Hook: called AFTER everything
+bootstrap_before = "lingti#before"    # Hook: called BEFORE layers
+bootstrap_after = "lingti#after"      # Hook: called AFTER everything
 project_auto_root = true
 ...
 ```
 
 #### Step 2: Call `bootstrap_before` Hook
 
-**File:** `~/.lingti/SpaceVim.d/autoload/paiyou.vim`
+**File:** `~/.lingti/SpaceVim.d/autoload/lingti.vim`
 
 ```vim
-function! paiyou#before() abort
+function! lingti#before() abort
   " Configure formatters BEFORE layers load
   let g:neoformat_typescriptreact_prettier = {
     \ 'exe': 'prettier',
@@ -200,7 +200,7 @@ Custom plugins are installed via SpaceVim's plugin manager and loaded after laye
 
 #### Step 5: Load Autoload Settings
 
-At the end of `paiyou.vim`, additional settings are dynamically loaded:
+At the end of `lingti.vim`, additional settings are dynamically loaded:
 
 ```vim
 let vimsettings = '~/.lingti/SpaceVim.d/autoload/settings'
@@ -257,12 +257,12 @@ Loads SpaceVim's built-in keybindings for the Space key leader system.
 
 ## Phase 6: VimEnter Event (`bootstrap_after`)
 
-**File:** `~/.lingti/SpaceVim.d/autoload/paiyou.vim`
+**File:** `~/.lingti/SpaceVim.d/autoload/lingti.vim`
 
-After everything is loaded, `VimEnter` triggers `paiyou#after()`:
+After everything is loaded, `VimEnter` triggers `lingti#after()`:
 
 ```vim
-function! paiyou#after() abort
+function! lingti#after() abort
   " Configure ALE fixers (must be after ALE loads)
   let g:ale_fixers = {
     \   'javascript': ['eslint', 'prettier'],
@@ -291,7 +291,7 @@ endfunction
 | File | When Loaded | Purpose |
 |------|-------------|---------|
 | `SpaceVim.d/init.toml` | Phase 3 | Main config (options, layers, plugins) |
-| `SpaceVim.d/autoload/paiyou.vim` | Phase 3 | Bootstrap hooks & settings loader |
+| `SpaceVim.d/autoload/lingti.vim` | Phase 3 | Bootstrap hooks & settings loader |
 | `SpaceVim.d/autoload/settings/neosnippet.vim` | Phase 3 | Snippet keybindings |
 | `SpaceVim.d/autoload/settings/lingti-keymap.vim` | Phase 3 | General vim mappings |
 | `SpaceVim.d/autoload/settings/lingti-keymap-mac.vim` | Phase 3 | macOS mappings |
@@ -383,9 +383,9 @@ For layers and plugins, modify `~/.SpaceVim.d/init.toml`.
 
 ### Option 2: Bootstrap Hooks
 
-For VimScript configuration, edit `~/.lingti/SpaceVim.d/autoload/paiyou.vim`:
-- `paiyou#before()` - Before layers load
-- `paiyou#after()` - After everything loads
+For VimScript configuration, edit `~/.lingti/SpaceVim.d/autoload/lingti.vim`:
+- `lingti#before()` - Before layers load
+- `lingti#after()` - After everything loads
 
 ### Option 3: Settings Files
 

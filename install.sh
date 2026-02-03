@@ -29,7 +29,7 @@ done
 
 if [ ! -d "$HOME/.lingti" ]; then
     echo "Installing Lingti for the first time"
-    git clone --depth=1 https://github.com/ruilisi/lingti-code.git "$HOME/.lingti"
+    git clone --depth=1 https://github.com/lingti/lingti-code.git "$HOME/.lingti"
     cd "$HOME/.lingti"
     [ "$1" = "ask" ] && export ASK="true"
     rake install

@@ -8,7 +8,7 @@
 
 ## Lingti Product Ecosystem
 
-**lingti-code** is part of the Lingti product family by [Suzhou Ruilisi Network Technology Co., Ltd.](https://lingti.com), which has served nearly 10,000 enterprises and holds 22 patents (13 invention) and 100+ software copyrights.
+**lingti-code** is part of the Lingti product family by [Suzhou Ruilisi Network Technology Co., Ltd.](https://lingti.com), which has served more than 10,000 enterprises and more than 10,000,000 individual customers.
 
 | Product | Description |
 |---------|-------------|
@@ -93,10 +93,10 @@ python3 -m pip install --user --upgrade pynvim
 
 ```bash
 # One-line install (macOS or Ubuntu)
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/ruilisi/lingti-code/master/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/lingti/lingti-code/master/install.sh)"
 
 # Or clone and install manually
-git clone https://github.com/ruilisi/lingti-code.git ~/.lingti
+git clone https://github.com/lingti/lingti-code.git ~/.lingti
 cd ~/.lingti
 rake install
 ```
@@ -108,7 +108,7 @@ The installer **automatically detects your platform** and uses Homebrew (macOS) 
 ```bash
 docker run -it ubuntu:latest
 apt update && apt install -y git curl zsh sudo
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/ruilisi/lingti-code/master/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/lingti/lingti-code/master/install.sh)"
 ```
 
 Ideal for cloud development, CI/CD pipelines, or spinning up a temporary full-featured dev environment in seconds.

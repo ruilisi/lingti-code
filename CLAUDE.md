@@ -78,7 +78,7 @@ Each tool uses a split config approach for customization:
 ### SpaceVim Structure
 
 Installation creates two directories in home:
-- `~/.SpaceVim` - Cloned from https://github.com/ruilisi/SpaceVim.git (the framework)
+- `~/.SpaceVim` - Cloned from https://github.com/lingti/SpaceVim.git (the framework)
 - `~/.SpaceVim.d` - Symlink to `SpaceVim.d/` in this repo (user configuration)
 
 Configuration:

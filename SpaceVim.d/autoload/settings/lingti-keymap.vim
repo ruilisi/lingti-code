@@ -358,7 +358,7 @@ function! SearchWordUnderCursorCount()
     echo "'" . l:word . "' " . l:count . " matches | o=open&stay ]q/[q=jump"
   endif
 endfunction
-" Note: SPC s P mapping is defined in paiyou#after() using SpaceVim#mapping#space#def
+" Note: SPC s P mapping is defined in lingti#after() using SpaceVim#mapping#space#def
 
 " Quickfix: keep window open when selecting results
 augroup QuickfixMapping
