@@ -61,13 +61,27 @@ function prompt_skwp_setup {
   zstyle ':prezto:module:git:info:untracked' format "${__PROMPT_SKWP_COLORS[3]}●%f"
   zstyle ':prezto:module:git:info:keys' format 'prompt' '(%b%d%a%m%u)'
 
-  PROMPT="${__PROMPT_SKWP_COLORS[3]}%n%f ${__PROMPT_SKWP_COLORS[5]}%~%f "'$git_info[prompt]'"$ "
-  [[ "$KCONTEXT" != ""  ]] && PROMPT="%F{blue}$KCONTEXT $PROMPT"
+  # Build base prompt (username hidden by default, set SHOW_USERNAME=1 to show)
+  if [[ "$SHOW_USERNAME" == "1" ]]; then
+    PROMPT="${__PROMPT_SKWP_COLORS[3]}%n%f ${__PROMPT_SKWP_COLORS[5]}%~%f "'$git_info[prompt]'"$ "
+  else
+    PROMPT="${__PROMPT_SKWP_COLORS[5]}%~%f "'$git_info[prompt]'"$ "
+  fi
+  # Show kubernetes context (set SHOW_KCONTEXT=1 to show, hidden by default)
+  [[ "$KCONTEXT" != "" && "$SHOW_KCONTEXT" == "1" ]] && PROMPT="%F{blue}$KCONTEXT $PROMPT"
   RPROMPT='%F{blue}'
 }
 
 alias disable_git_info='DISABLE_GIT_INFO=1'
 alias enable_git_info='DISABLE_GIT_INFO=0'
+
+# Toggle username display
+alias show_username='SHOW_USERNAME=1; prompt_skwp_setup'
+alias hide_username='SHOW_USERNAME=0; prompt_skwp_setup'
+
+# Toggle kubernetes context display
+alias show_kcontext='SHOW_KCONTEXT=1; prompt_skwp_setup'
+alias hide_kcontext='SHOW_KCONTEXT=0; prompt_skwp_setup'
 function set_k8s_context {
   set_k8s_context_core $*
   prompt_skwp_setup
