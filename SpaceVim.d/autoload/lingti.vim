@@ -1,4 +1,7 @@
 function! lingti#before() abort
+  " Enable devicons in LeaderF file list
+  let g:Lf_ShowDevIcons = 1
+
   " typescript
   let g:neoformat_typescriptreact_prettier = {
         \ 'exe': 'prettier',

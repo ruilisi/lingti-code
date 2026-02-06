@@ -104,6 +104,10 @@ name = "lang#python"
 name = "tools"
 
 [[custom_plugins]]
+repo = "nvim-tree/nvim-web-devicons"
+merged = false
+
+[[custom_plugins]]
 repo = "tveskag/nvim-blame-line.git"
 merged = false
 

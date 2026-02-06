@@ -315,3 +315,6 @@ gpc_key() {
   shift
   GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes" git push --set-upstream origin "$(git-branch-current 2>/dev/null)" "$@"
 }
+
+# Claude Code
+alias claude-yolo='claude --dangerously-skip-permissions'
