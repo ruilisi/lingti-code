@@ -77,6 +77,7 @@ alias guns='git unstage'
 alias gunc='git uncommit'
 alias gfap='git fetch --all --prune'
 alias gdf="git diff-tree --no-commit-id --name-only -r"
+alias gsst='git show --shortstat --format=""' # show only total lines changed
 alias gnb='git nb' # new branch aka checkout -b
 alias gdmb='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 alias gpb='git push origin "$(git-branch-current 2> /dev/null):build"'
