@@ -1,4 +1,7 @@
 function! lingti#before() abort
+  " Add lua directory to runtime path for custom modules
+  let &runtimepath = &runtimepath . ',' . expand('~/.SpaceVim.d')
+
   " Enable devicons in LeaderF file list
   let g:Lf_ShowDevIcons = 1
 
@@ -25,7 +28,8 @@ function! lingti#after() abort
   let g:ale_fix_on_save = 1
 
   " LSP keybindings for TypeScript/JavaScript (like Go)
-  " gd         - go to definition
+  " gd         - go to source definition (skips imports)
+  " gD         - go to definition (may stop at import)
   " K          - hover documentation
   " gr         - go to references
   " gi         - go to implementation
@@ -33,7 +37,8 @@ function! lingti#after() abort
   augroup typescript_lsp
     autocmd!
     autocmd FileType typescript,typescriptreact,javascript,javascriptreact
-          \ nnoremap <buffer> <silent> gd :lua vim.lsp.buf.definition()<CR>|
+          \ nnoremap <buffer> <silent> gd :lua require('lingti.lsp').go_to_source_definition()<CR>|
+          \ nnoremap <buffer> <silent> gD :lua vim.lsp.buf.definition()<CR>|
           \ nnoremap <buffer> <silent> K :lua vim.lsp.buf.hover()<CR>|
           \ nnoremap <buffer> <silent> gr :lua vim.lsp.buf.references()<CR>|
           \ nnoremap <buffer> <silent> gi :lua vim.lsp.buf.implementation()<CR>|

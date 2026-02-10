@@ -100,8 +100,6 @@ format_on_save = true
 [[layers]]
 name = "lang#python"
 
-[[layers]]
-name = "tools"
 
 [[custom_plugins]]
 repo = "nvim-tree/nvim-web-devicons"
