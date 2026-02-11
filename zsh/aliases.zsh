@@ -70,7 +70,7 @@ alias ze='vim ~/.zshrc'
 
 # Git Aliases (most provided by omz-git plugin in ~/.zsh.after/)
 # Custom aliases not covered by oh-my-zsh git plugin:
-alias gi='vim .gitignore'
+unalias gs
 alias gcim='git ci -m'
 alias gci='git ci'
 alias guns='git unstage'

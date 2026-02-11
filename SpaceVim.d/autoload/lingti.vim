@@ -15,6 +15,21 @@ function! lingti#before() abort
   let g:neoformat_enabled_ruby = ['rubocop']
 endfunction
 
+function! s:swift_lsp_mappings() abort
+  if SpaceVim#layers#lsp#check_server('sourcekit')
+    nnoremap <silent><buffer> K :call SpaceVim#lsp#show_doc()<CR>
+    nnoremap <silent><buffer> gD :<C-u>call SpaceVim#lsp#go_to_typedef()<CR>
+    call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'd'],
+          \ 'call SpaceVim#lsp#show_doc()', 'show-document', 1)
+    call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'x'],
+          \ 'call SpaceVim#lsp#references()', 'show-references', 1)
+    call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'e'],
+          \ 'call SpaceVim#lsp#rename()', 'rename-symbol', 1)
+    call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 's'],
+          \ 'call SpaceVim#lsp#show_line_diagnostics()', 'show-line-diagnostics', 1)
+  endif
+endfunction
+
 function! lingti#after() abort
   " Override SPC s P to use quickfix instead of FlyGrep
   " Note: Must use SpaceVim#mapping#space#def (immediate) not SpaceVim#custom#SPC (queued before bootstrap_after)
@@ -34,6 +49,16 @@ function! lingti#after() abort
   " gr         - go to references
   " gi         - go to implementation
   " <leader>rn - rename symbol
+  " LSP keybindings for Swift (like Go)
+  if SpaceVim#layers#lsp#check_server('sourcekit')
+    call SpaceVim#mapping#gd#add('swift',
+          \ function('SpaceVim#lsp#go_to_def'))
+  endif
+  augroup swift_lsp
+    autocmd!
+    autocmd FileType swift call s:swift_lsp_mappings()
+  augroup END
+
   augroup typescript_lsp
     autocmd!
     autocmd FileType typescript,typescriptreact,javascript,javascriptreact

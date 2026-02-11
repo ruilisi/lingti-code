@@ -123,8 +123,11 @@ gtagslabel = "pygments"
 name = "lang#rust"
 
 [[layers]]
+name = "lang#swift"
+
+[[layers]]
 name = "lsp"
-enabled_clients = ['pyright', "gopls", "tsserver"]
+enabled_clients = ['pyright', "gopls", "tsserver", "sourcekit"]
 
 [layers.override_cmd]
 gopls = ['gopls', '-remote=auto']
