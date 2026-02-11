@@ -15,10 +15,29 @@ function! lingti#before() abort
   let g:neoformat_enabled_ruby = ['rubocop']
 endfunction
 
-function! s:swift_lsp_mappings() abort
-  if SpaceVim#layers#lsp#check_server('sourcekit')
+function! s:ts_go_to_source_def() abort
+  lua require('lingti.lsp').go_to_source_definition()
+endfunction
+
+function! s:lsp_go_to_def() abort
+  " If a language-specific handler is registered, use it; otherwise LSP definition
+  let l:handler = SpaceVim#mapping#gd#get()
+  if !empty(l:handler)
+    call call(l:handler, [])
+  elseif luaeval('#vim.lsp.get_clients({bufnr = 0})') > 0
+    lua vim.lsp.buf.definition()
+  else
+    normal! gd
+  endif
+endfunction
+
+function! s:global_lsp_mappings() abort
+  if luaeval('#vim.lsp.get_clients({bufnr = 0})') > 0
     nnoremap <silent><buffer> K :call SpaceVim#lsp#show_doc()<CR>
     nnoremap <silent><buffer> gD :<C-u>call SpaceVim#lsp#go_to_typedef()<CR>
+    nnoremap <silent><buffer> gr :lua vim.lsp.buf.references()<CR>
+    nnoremap <silent><buffer> gi :lua vim.lsp.buf.implementation()<CR>
+    nnoremap <silent><buffer> <leader>rn :lua vim.lsp.buf.rename()<CR>
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'd'],
           \ 'call SpaceVim#lsp#show_doc()', 'show-document', 1)
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'x'],
@@ -42,33 +61,23 @@ function! lingti#after() abort
         \}
   let g:ale_fix_on_save = 1
 
-  " LSP keybindings for TypeScript/JavaScript (like Go)
-  " gd         - go to source definition (skips imports)
-  " gD         - go to definition (may stop at import)
-  " K          - hover documentation
-  " gr         - go to references
-  " gi         - go to implementation
-  " <leader>rn - rename symbol
-  " LSP keybindings for Swift (like Go)
-  if SpaceVim#layers#lsp#check_server('sourcekit')
-    call SpaceVim#mapping#gd#add('swift',
-          \ function('SpaceVim#lsp#go_to_def'))
-  endif
-  augroup swift_lsp
+  " Global LSP keybindings: gd, gD, K, gr, gi, <leader>rn, SPC l ...
+  " Applied to any buffer with an active LSP client.
+  " TS uses go_to_source_definition for gd; all others use standard LSP definition.
+  augroup global_lsp
     autocmd!
-    autocmd FileType swift call s:swift_lsp_mappings()
+    autocmd LspAttach * call s:global_lsp_mappings()
   augroup END
 
-  augroup typescript_lsp
-    autocmd!
-    autocmd FileType typescript,typescriptreact,javascript,javascriptreact
-          \ nnoremap <buffer> <silent> gd :lua require('lingti.lsp').go_to_source_definition()<CR>|
-          \ nnoremap <buffer> <silent> gD :lua vim.lsp.buf.definition()<CR>|
-          \ nnoremap <buffer> <silent> K :lua vim.lsp.buf.hover()<CR>|
-          \ nnoremap <buffer> <silent> gr :lua vim.lsp.buf.references()<CR>|
-          \ nnoremap <buffer> <silent> gi :lua vim.lsp.buf.implementation()<CR>|
-          \ nnoremap <buffer> <silent> <leader>rn :lua vim.lsp.buf.rename()<CR>
-  augroup END
+  " gd: register per-filetype via SpaceVim's dispatcher
+  " TypeScript: use source definition (skips re-exports/imports)
+  call SpaceVim#mapping#gd#add('typescript', function('s:ts_go_to_source_def'))
+  call SpaceVim#mapping#gd#add('typescriptreact', function('s:ts_go_to_source_def'))
+  call SpaceVim#mapping#gd#add('javascript', function('s:ts_go_to_source_def'))
+  call SpaceVim#mapping#gd#add('javascriptreact', function('s:ts_go_to_source_def'))
+
+  " Override SpaceVim's gd to fall back to LSP instead of vim's native gd
+  nnoremap <silent> gd :call <SID>lsp_go_to_def()<CR>
   let g:ctrlp_max_files=0
   let g:neoformat_enabled_javascript = ['eslint', 'prettier']
   let g:neoformat_enabled_javascriptreact = ['eslint', 'prettier']
