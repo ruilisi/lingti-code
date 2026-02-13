@@ -5,6 +5,35 @@ function! lingti#before() abort
   " Configure sourcekit-lsp with Xcode index store for Find References support
   autocmd User SpaceVimLspSetup lua require('lingti.lsp').setup_sourcekit()
 
+  " Markdown Preview: disable auto-scroll, keep server alive
+  let g:mkdp_refresh_slow = 0
+  let g:mkdp_auto_close = 0
+  let g:mkdp_preview_options = {
+        \ 'disable_sync_scroll': 1,
+        \ }
+
+  " Auto-detect external file changes (e.g. from Claude Code edits)
+  " Poll file mtime every 1s; force :edit to reload buffer and trigger mkdp refresh
+  set autoread
+  lua << EOF
+  local last_mtime = {}
+  local timer = vim.loop.new_timer()
+  timer:start(2000, 2000, vim.schedule_wrap(function()
+    local buf = vim.api.nvim_get_current_buf()
+    if vim.bo[buf].filetype ~= 'markdown' then return end
+    local fname = vim.api.nvim_buf_get_name(buf)
+    if fname == '' then return end
+    local stat = vim.loop.fs_stat(fname)
+    if not stat then return end
+    local mtime = stat.mtime.sec
+    if last_mtime[fname] and last_mtime[fname] ~= mtime and not vim.bo[buf].modified then
+      vim.cmd('silent! edit')
+      pcall(vim.fn['mkdp#rpc#preview_refresh'])
+    end
+    last_mtime[fname] = mtime
+  end))
+EOF
+
   " Enable devicons in LeaderF file list
   let g:Lf_ShowDevIcons = 1
 
