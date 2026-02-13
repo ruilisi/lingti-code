@@ -1,5 +1,21 @@
 local M = {}
 
+-- Configure sourcekit-lsp with Package.swift-first root detection
+-- Default root_pattern('Package.swift', '.git') picks .git too early when
+-- Package.swift lives in a subdirectory, breaking index/references.
+function M.setup_sourcekit()
+  local nvim_lsp = require('lspconfig')
+  local util = require('lspconfig.util')
+  nvim_lsp.sourcekit.setup({
+    root_dir = function(filename, _)
+      -- Prefer Package.swift (nearest ancestor), fall back to .git
+      return util.root_pattern('Package.swift')(filename)
+        or util.root_pattern('.git')(filename)
+    end,
+    flags = { debounce_text_changes = 150 },
+  })
+end
+
 -- Go to source definition for TypeScript/JavaScript
 -- Uses typescript-language-server's _typescript.goToSourceDefinition command
 -- which goes directly to the source file instead of stopping at imports

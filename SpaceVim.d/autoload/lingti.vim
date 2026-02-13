@@ -2,6 +2,9 @@ function! lingti#before() abort
   " Add lua directory to runtime path for custom modules
   let &runtimepath = &runtimepath . ',' . expand('~/.SpaceVim.d')
 
+  " Configure sourcekit-lsp with Xcode index store for Find References support
+  autocmd User SpaceVimLspSetup lua require('lingti.lsp').setup_sourcekit()
+
   " Enable devicons in LeaderF file list
   let g:Lf_ShowDevIcons = 1
 
@@ -40,8 +43,6 @@ function! s:global_lsp_mappings() abort
     nnoremap <silent><buffer> <leader>rn :lua vim.lsp.buf.rename()<CR>
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'd'],
           \ 'call SpaceVim#lsp#show_doc()', 'show-document', 1)
-    call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'x'],
-          \ 'call SpaceVim#lsp#references()', 'show-references', 1)
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'e'],
           \ 'call SpaceVim#lsp#rename()', 'rename-symbol', 1)
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 's'],
