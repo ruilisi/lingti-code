@@ -455,9 +455,39 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 7. Language-Specific
+# 7. LSP (Global)
 
-## 7.1 Markdown (SPC l)
+These keybindings are applied automatically to any buffer with an active LSP client via the `LspAttach` autocmd.
+
+## 7.1 Navigation
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `gd` | Go to definition (TS/JS: source definition) | Normal |
+| `gD` | Go to type definition | Normal |
+| `gr` | Find references | Normal |
+| `gi` | Go to implementation | Normal |
+| `K` | Show hover documentation | Normal |
+
+## 7.2 Refactoring
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `<leader>rn` | Rename symbol | Normal |
+
+## 7.3 SPC l (Language)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `<SPC>l d` | Show documentation | Normal |
+| `<SPC>l e` | Rename symbol | Normal |
+| `<SPC>l s` | Show line diagnostics | Normal |
+
+---
+
+# 8. Language-Specific
+
+## 8.1 Markdown (SPC l)
 
 ### Preview & Links
 | Keymap | Action | Mode |
@@ -484,7 +514,7 @@ Example: `<SPC>s a p` = ag search in project
 |--------|--------|------|
 | `<SPC>l t` | Toggle checkbox | Normal |
 
-## 7.2 Go (SPC l)
+## 8.2 Go (SPC l)
 
 ### Navigation
 | Keymap | Action | Mode |
@@ -492,7 +522,6 @@ Example: `<SPC>s a p` = ag search in project
 | `<SPC>l a` | Go alternate (test/impl) | Normal |
 | `<SPC>l g` | Go definition | Normal |
 | `<SPC>l i` | Go implements | Normal |
-| `<SPC>l x` | Go referrers | Normal |
 | `<SPC>l l` | Decl in file | Normal |
 | `<SPC>l L` | Decl in directory | Normal |
 
@@ -529,20 +558,12 @@ Example: `<SPC>s a p` = ag search in project
 | `<SPC>l m` | Format imports | Normal |
 | `<SPC>l M` | Add import | Normal |
 
-## 7.3 Ruby (SPC l)
+## 8.3 Ruby (SPC l)
 
 ### Execution
 | Keymap | Action | Mode |
 |--------|--------|------|
 | `<SPC>l r` | Execute current file | Normal |
-
-### LSP Features
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l d` | Show document | Normal |
-| `<SPC>l x` | Show references | Normal |
-| `<SPC>l e` | Rename symbol | Normal |
-| `<SPC>l h` | Show line diagnostics | Normal |
 
 ### Workspace
 | Keymap | Action | Mode |
@@ -561,9 +582,9 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 8. Snippets & Completion
+# 9. Snippets & Completion
 
-## 8.1 NeoSnippet
+## 9.1 NeoSnippet
 
 ### Snippet Expansion
 | Keymap | Action | Mode |
@@ -572,7 +593,7 @@ Example: `<SPC>s a p` = ag search in project
 | `<C-e>` | Expand snippet target | Visual |
 | `<TAB>` | Jump to next (if expandable) | Select |
 
-## 8.2 Copilot
+## 9.2 Copilot
 
 ### AI Completion
 | Keymap | Action | Mode |
@@ -581,9 +602,9 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 9. Quickfix & Errors
+# 10. Quickfix & Errors
 
-## 9.1 Quickfix Window
+## 10.1 Quickfix Window
 
 ### Quickfix Control
 | Keymap | Action | Mode |
@@ -599,9 +620,9 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 10. Vim Configuration
+# 11. Vim Configuration
 
-## 10.1 Config Files
+## 11.1 Config Files
 
 ### Edit Config
 | Keymap | Action | Mode |
@@ -622,7 +643,7 @@ Example: `<SPC>s a p` = ag search in project
 |--------|--------|------|
 | `,vc` | Execute line as vim command | Normal |
 
-## 10.2 File Info
+## 11.2 File Info
 
 ### Copy Filename
 | Keymap | Action | Mode |
@@ -638,9 +659,9 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 11. UI & Display
+# 12. UI & Display
 
-## 11.1 Display Options
+## 12.1 Display Options
 
 ### Paste Mode
 | Keymap | Action | Mode |
@@ -659,7 +680,7 @@ Example: `<SPC>s a p` = ag search in project
 |--------|--------|------|
 | `<leader>ss` | Toggle spell checking | Normal |
 
-## 11.2 Debug
+## 12.2 Debug
 
 ### Syntax Highlight
 | Keymap | Action | Mode |
@@ -673,9 +694,9 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 12. Miscellaneous
+# 13. Miscellaneous
 
-## 12.1 Saving
+## 13.1 Saving
 
 ### Quick Save
 | Keymap | Action | Mode |
@@ -683,7 +704,7 @@ Example: `<SPC>s a p` = ag search in project
 | `<Leader>w` | Write file | Normal/Insert/Visual |
 | `:W` | Sudo write file | Command |
 
-## 12.2 Scratch Buffers
+## 13.2 Scratch Buffers
 
 ### Temporary Files
 | Keymap | Action | Mode |
@@ -691,7 +712,7 @@ Example: `<SPC>s a p` = ag search in project
 | `<leader>q` | Open ~/buffer for scribble | Normal |
 | `<leader>x` | Open ~/buffer.md for markdown | Normal |
 
-## 12.3 Special
+## 13.3 Special
 
 ### Text Cleanup
 | Keymap | Action | Mode |
