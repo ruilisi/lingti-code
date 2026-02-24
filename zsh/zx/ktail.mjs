@@ -1,5 +1,7 @@
 #!/usr/bin/env zx
 
+import { resolveInstance } from "./lib/resolve-instance.mjs";
+
 $.shell = "/usr/local/bin/zsh";
 $.prefix += "source ~/.lingti/zsh/k8s.zsh;";
 $.verbose = false;
@@ -7,11 +9,12 @@ $.verbose = false;
 const usage = `ktail - Tail a file across all pods of a Kubernetes instance
 
 Usage:
-  ktail <instance> <file>
+  ktail <instance|chart.yaml> <file>
   ktail stellar-v4-server /usr/src/app/log/production.log
+  ktail charts/stellar-go-v3.yaml /usr/src/app/log/production.log
 
 Arguments:
-  instance    app.kubernetes.io/instance label value
+  instance    app.kubernetes.io/instance label value (or path to YAML chart)
   file        File path to tail inside each pod`;
 
 if (argv.h || argv.help || argv._.length < 2) {
@@ -19,7 +22,8 @@ if (argv.h || argv.help || argv._.length < 2) {
   process.exit(argv.h || argv.help ? 0 : 1);
 }
 
-const [instance, file] = argv._;
+const [rawInstance, file] = argv._;
+const instance = await resolveInstance(rawInstance);
 
 const pods = (
   await $`kubectl get pods -l app.kubernetes.io/instance=${instance} -o custom-columns=":metadata.name"`

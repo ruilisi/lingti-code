@@ -1,19 +1,37 @@
 #!/usr/bin/env zx
 
+import { resolveInstance } from "./lib/resolve-instance.mjs";
+
 $.shell = "/usr/local/bin/zsh";
 $.prefix += "source ~/.lingti/zsh/k8s.zsh;";
 $.verbose = true;
 
 if (argv.h) {
-  console.info(`Usage:
-CMD [-h] [-i instance | -d deployment] [-n NAMESPACE] [--tail N] [-f]`);
+  console.info(`klogs - Tail Kubernetes pod logs by instance or deployment
+
+Usage:
+  klogs -i <instance|chart.yaml> [-n NAMESPACE] [--tail N]
+  klogs -d <deployment> [-n NAMESPACE]
+
+Options:
+  -i    Instance name or path to a YAML chart file
+  -d    Deployment name
+  -n    Namespace (default: default)
+  --tail  Number of lines (default: 100)
+  -h    Show this help`);
   process.exit();
 }
-const { d, _, i, n = "default", tail = 100 } = argv;
+const { d, _, n = "default", tail = 100 } = argv;
+let { i } = argv;
+
 if (i) {
+  i = await resolveInstance(i);
   while (true) {
     await $`kubectl logs -f -n ${n} --tail ${tail} -l app.kubernetes.io/instance=${i} 2>&1 || true; sleep 2`;
   }
 } else if (d) {
-  await `kubectl logs -f deployment/${d} --all-containers=true --since=24h --pod-running-timeout=2s 2>&1`;
+  await $`kubectl logs -f deployment/${d} --all-containers=true --since=24h --pod-running-timeout=2s 2>&1`;
+} else {
+  console.error("Error: specify -i <instance> or -d <deployment>");
+  process.exit(1);
 }
