@@ -127,7 +127,7 @@ name = "lang#swift"
 
 [[layers]]
 name = "lsp"
-enabled_clients = ['pyright', "gopls", "tsserver", "sourcekit"]
+enabled_clients = ['pyright', "gopls", "tsserver", "sourcekit", "solargraph"]
 
 [layers.override_cmd]
 gopls = ['gopls', '-remote=auto']

@@ -1,6 +1,4 @@
-# Keymaps Reference
-
-Complete keymap documentation for Lingti + SpaceVim configuration.
+# Vim Keymaps
 
 **Leader Keys:**
 - `<Space>` (SPC) - SpaceVim leader
@@ -9,95 +7,35 @@ Complete keymap documentation for Lingti + SpaceVim configuration.
 
 ---
 
-# 1. Shell (Zsh)
+## Finding Keymaps
 
-## 1.1 Command Line Editing
+The files in `vim/settings` are customizations stored on a per-plugin basis. The main keymap is available in lingti-keymap.vim, but some of the vim files contain key mappings as well.
 
-### Navigation & History
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `Ctrl-R` | Vim mode and bash style historical reverse search | Zsh |
-| `ESC C-x C-e` | Edit current command line in vim | Zsh |
+Use `:map [keycombo]` (e.g. `:map <C-\>`) to see what the key is mapped to. For bonus points, use `:verbose map [keycombo]` to see where it was set.
 
-### Alias Management
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `ae` | Edit aliases | Zsh |
-| `ar` | Reload aliases | Zsh |
+### Finding Filetype-Specific Keymaps (SpaceVim)
 
----
+With the relevant filetype open (e.g., a `.go` file):
 
-# 2. Tmux
+```vim
+:verbose nmap <Space>le
+```
 
-## 2.1 Pane Management
+Language keymaps are defined in SpaceVim layer files:
 
-Prefix is defined as `C-a` (`PRE` for short)
+```
+~/.SpaceVim/autoload/SpaceVim/layers/lang/<language>.vim
+```
 
-### Pane Navigation
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `C-h` | Move to left pane | Tmux |
-| `C-j` | Move to pane below | Tmux |
-| `C-k` | Move to pane above | Tmux |
-| `C-l` | Move to right pane | Tmux |
-| `PRE o` | Go to next pane (cycle) | Tmux |
-| `PRE ;` | Go to last (previously used) pane | Tmux |
-| `PRE 1-9` | Jump to pane 1-9 | Tmux |
+Press `<SPC> h l` to list all layers and their keybindings.
 
-### Pane Creation & Splitting
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE c` | Create a new pane | Tmux |
-| `PRE s` | Split panes horizontally (up/down) | Tmux |
-| `PRE v` | Split panes vertically (left/right) | Tmux |
-
-### Pane Actions
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE x` | Kill pane | Tmux |
-| `PRE z` | Zoom/Unzoom pane | Tmux |
-| `PRE !` | Move current pane to new window | Tmux |
-| `PRE {` | Move pane to previous position | Tmux |
-| `PRE }` | Move pane to next position | Tmux |
-| `PRE C-o` | Rotate window up (move all panes) | Tmux |
-| `PRE M-o` | Rotate window down | Tmux |
-| `PRE m` | Mark pane | Tmux |
-
-### Pane Resize
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE h` | Resize pane left | Tmux |
-| `PRE j` | Resize pane down | Tmux |
-| `PRE k` | Resize pane up | Tmux |
-| `PRE l` | Resize pane right | Tmux |
-
-## 2.2 Window Management
-
-### Window Actions
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE ,` | Rename window | Tmux |
-| `PRE d` | Detach from session | Tmux |
-| `PRE D` | Choose session to detach | Tmux |
-| `PRE >` | Show cheatsheet | Tmux |
-| `PRE <` | Show cheatsheet | Tmux |
-
-## 2.3 Copy Mode
-
-Press `PRE [` to enter Scroll/Copy Mode
-
-### Copy Mode Operations
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `Shift-V` | Select text (visual line) | Copy Mode |
-| `Enter` | Copy selected text | Copy Mode |
-| `]` | Paste text copied from scroll mode | Normal |
+Online docs: `https://spacevim.org/layers/lang/<language>/`
 
 ---
 
-# 3. Vim Navigation
+# 1. Navigation
 
-## 3.1 Window Management
+## 1.1 Window Management
 
 ### Window Movement
 | Keymap | Action | Mode |
@@ -163,7 +101,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<C-Left>` | Decrease window width | Normal |
 | `<C-Right>` | Increase window width | Normal |
 
-## 3.2 Buffer Management
+## 1.2 Buffer Management
 
 ### Buffer Navigation
 | Keymap | Action | Mode |
@@ -181,7 +119,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<leader>bd` | Close current buffer | Normal |
 | `<leader>bda` | Close all buffers | Normal |
 
-## 3.3 Tab Management
+## 1.3 Tab Management
 
 ### Tab Navigation
 | Keymap | Action | Mode |
@@ -203,7 +141,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<D-1>` to `<D-9>` | Jump to tab 1-9 (Mac) | Normal |
 | `<A-1>` to `<A-9>` | Jump to tab 1-9 (Linux) | Normal |
 
-## 3.4 File Explorer
+## 1.4 File Explorer
 
 ### NERDTree
 | Keymap | Action | Mode |
@@ -212,7 +150,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<D-N>` | Toggle NERDTree (Mac) | Normal |
 | `<A-N>` | Toggle NERDTree (Linux) | Normal |
 
-## 3.5 Cursor Movement
+## 1.5 Cursor Movement
 
 ### Basic Movement
 | Keymap | Action | Mode |
@@ -243,9 +181,9 @@ Press `PRE [` to enter Scroll/Copy Mode
 
 ---
 
-# 4. Vim Editing
+# 2. Editing
 
-## 4.1 Text Objects & Surround
+## 2.1 Text Objects & Surround
 
 ### Surround Operations
 | Keymap | Action | Mode |
@@ -266,7 +204,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<D-(>` / `<A-(>` | Find and change inside parens | Normal |
 | `<D-[>` / `<A-[>` | Find and change inside brackets | Normal |
 
-## 4.2 Yank & Paste
+## 2.2 Yank & Paste
 
 ### Yank Operations
 | Keymap | Action | Mode |
@@ -289,7 +227,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<leader>y` | Copy to ~/.vbuf | Visual |
 | `<leader>p` | Paste from ~/.vbuf | Normal |
 
-## 4.3 Line Operations
+## 2.3 Line Operations
 
 ### Split/Join
 | Keymap | Action | Mode |
@@ -303,7 +241,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<` | Decrease indent (stay in visual) | Visual |
 | `>` | Increase indent (stay in visual) | Visual |
 
-## 4.4 Insert Mode Helpers
+## 2.4 Insert Mode Helpers
 
 ### Quick Insert
 | Keymap | Action | Mode |
@@ -328,7 +266,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<A-k>` / `<A-d>` | Type underscore | Insert |
 | `<A-K>` / `<A-D>` | Type dash | Insert |
 
-## 4.5 Comments
+## 2.5 Comments
 
 ### Toggle Comments
 | Keymap | Action | Mode |
@@ -336,7 +274,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<D-/>` | Toggle comment (Mac) | Normal/Insert |
 | `<A-/>` | Toggle comment (Linux) | Normal/Insert |
 
-## 4.6 Alignment
+## 2.6 Alignment
 
 ### Tabularize
 | Keymap | Action | Mode |
@@ -346,9 +284,9 @@ Press `PRE [` to enter Scroll/Copy Mode
 
 ---
 
-# 5. Search & Find
+# 3. Search & Find
 
-## 5.1 Basic Search
+## 3.1 Basic Search
 
 ### Search Control
 | Keymap | Action | Mode |
@@ -358,7 +296,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `*` | Search selection forward | Visual |
 | `#` | Search selection backward | Visual |
 
-## 5.2 Grep Operations (SPC s)
+## 3.2 Grep Operations (SPC s)
 
 ### Buffer Search
 | Keymap | Action | Mode |
@@ -380,7 +318,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | Keymap | Action | Mode |
 |--------|--------|------|
 | `<SPC>s p` | Grep in project | Normal |
-| `<SPC>s P` | Grep cword in project | Normal |
+| `<SPC>s P` | Grep cword in project (quickfix) | Normal |
 | `<SPC>s j` | Background search in project | Normal |
 | `<SPC>s J` | Background search cword in project | Normal |
 
@@ -391,7 +329,7 @@ Press `PRE [` to enter Scroll/Copy Mode
 | `<SPC>s l` | List all search results | Normal |
 | `<SPC>s c` | Clear search results | Normal |
 
-## 5.3 Search Tool Namespaces
+## 3.3 Search Tool Namespaces
 
 Use `<SPC>s {tool} {scope}` pattern:
 
@@ -403,9 +341,9 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 6. Git Operations
+# 4. Git Operations
 
-## 6.1 Basic Git (SPC g)
+## 4.1 Basic Git (SPC g)
 
 ### File Operations
 | Keymap | Action | Mode |
@@ -438,7 +376,7 @@ Example: `<SPC>s a p` = ag search in project
 | `<SPC>g m` | Git branch manager | Normal |
 | `<SPC>g r` | Git remote manager | Normal |
 
-## 6.2 Git Hunks
+## 4.2 Git Hunks
 
 ### Hunk Navigation
 | Keymap | Action | Mode |
@@ -455,11 +393,11 @@ Example: `<SPC>s a p` = ag search in project
 
 ---
 
-# 7. LSP (Global)
+# 5. LSP (Global)
 
-These keybindings are applied automatically to any buffer with an active LSP client via the `LspAttach` autocmd.
+These keybindings are applied automatically to any buffer with an active LSP client via the `LspAttach` autocmd. Defined in `lingti.vim`.
 
-## 7.1 Navigation
+## 5.1 Navigation
 
 | Keymap | Action | Mode |
 |--------|--------|------|
@@ -469,122 +407,189 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 | `gi` | Go to implementation | Normal |
 | `K` | Show hover documentation | Normal |
 
-## 7.2 Refactoring
+## 5.2 Refactoring
 
 | Keymap | Action | Mode |
 |--------|--------|------|
 | `<leader>rn` | Rename symbol | Normal |
 
-## 7.3 SPC l (Language)
+## 5.3 SPC l (Language)
 
 | Keymap | Action | Mode |
 |--------|--------|------|
 | `<SPC>l d` | Show documentation | Normal |
 | `<SPC>l e` | Rename symbol | Normal |
 | `<SPC>l s` | Show line diagnostics | Normal |
-
----
-
-# 8. Language-Specific
-
-## 8.1 Markdown (SPC l)
-
-### Preview & Links
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l p` | Real-time markdown preview | Normal |
-| `<SPC>l k` | Add link URL | Normal |
-| `<SPC>l K` | Add link picture | Normal |
-
-### Table of Contents
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l c` | Create TOC at cursor | Normal |
-| `<SPC>l C` | Remove TOC | Normal |
-| `<SPC>l u` | Update TOC | Normal |
-
-### Code Blocks
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l r` | Run code in block | Normal |
-| `<SPC>l f` | Format code block | Normal |
-
-### Checkbox
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l t` | Toggle checkbox | Normal |
-
-## 8.2 Go (SPC l)
-
-### Navigation
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l a` | Go alternate (test/impl) | Normal |
-| `<SPC>l g` | Go definition | Normal |
-| `<SPC>l i` | Go implements | Normal |
-| `<SPC>l l` | Decl in file | Normal |
-| `<SPC>l L` | Decl in directory | Normal |
-
-### Documentation
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l d` | Go doc | Normal |
-| `<SPC>l D` | Go doc (vertical) | Normal |
-| `<SPC>l h` | Go info | Normal |
-
-### Build & Test
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l b` | Go build | Normal |
-| `<SPC>l t` | Go test | Normal |
-| `<SPC>l T` | Go test function | Normal |
-| `<SPC>l r` | Execute current file | Normal |
-| `<SPC>l c` | Go coverage toggle | Normal |
-
-### Refactoring
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l e` | Go rename | Normal |
-| `<SPC>l G` | Go generate | Normal |
-| `<SPC>l I` | Impl stubs | Normal |
-| `<SPC>l s` | Fill struct | Normal |
-| `<SPC>l v` | Freevars | Normal |
-
-### Tags & Imports
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l k` | Add tags | Normal |
-| `<SPC>l K` | Remove tags | Normal |
-| `<SPC>l m` | Format imports | Normal |
-| `<SPC>l M` | Add import | Normal |
-
-## 8.3 Ruby (SPC l)
-
-### Execution
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `<SPC>l r` | Execute current file | Normal |
-
-### Workspace
-| Keymap | Action | Mode |
-|--------|--------|------|
+| `<SPC>l x` | Show references | Normal |
 | `<SPC>l w l` | List workspace folders | Normal |
 | `<SPC>l w a` | Add workspace folder | Normal |
 | `<SPC>l w r` | Remove workspace folder | Normal |
 
-### REPL
+---
+
+# 6. Language-Specific
+
+All language keymaps use the `<SPC> l` prefix. These are only active when editing files of the corresponding filetype.
+
+### Common REPL Keymaps (Languages with REPL support)
+
 | Keymap | Action | Mode |
 |--------|--------|------|
 | `<SPC>l s i` | Start REPL process | Normal |
-| `<SPC>l s l` | Send line to REPL | Normal |
-| `<SPC>l s b` | Send buffer to REPL | Normal |
-| `<SPC>l s s` | Send selection to REPL | Normal |
+| `<SPC>l s b` | Send whole buffer | Normal |
+| `<SPC>l s l` | Send current line | Normal |
+| `<SPC>l s s` | Send selection | Normal |
+
+## 6.1 Go (`*.go`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `<SPC>l a` | Go alternate (test / implementation) | Normal |
+| `<SPC>l b` | Go build | Normal |
+| `<SPC>l c` | Go coverage toggle | Normal |
+| `<SPC>l d` | Go doc | Normal |
+| `<SPC>l D` | Go doc (vertical split) | Normal |
+| `<SPC>l e` | Go rename | Normal |
+| `<SPC>l g` | Go to definition | Normal |
+| `<SPC>l G` | Go generate | Normal |
+| `<SPC>l h` | Go info | Normal |
+| `<SPC>l i` | Go implements | Normal |
+| `<SPC>l I` | Implement interface stubs | Normal |
+| `<SPC>l k` | Add struct tags | Normal |
+| `<SPC>l K` | Remove struct tags | Normal |
+| `<SPC>l l` | List declarations in file | Normal |
+| `<SPC>l L` | List declarations in directory | Normal |
+| `<SPC>l m` | Format imports | Normal |
+| `<SPC>l M` | Add import | Normal |
+| `<SPC>l r` | Run current file | Normal |
+| `<SPC>l s` | Fill struct (without LSP) / Show diagnostics (with LSP) | Normal |
+| `<SPC>l t` | Go test | Normal |
+| `<SPC>l T` | Go test function | Normal |
+| `<SPC>l v` | Freevars | Normal |
+| `<SPC>l x` | Go referrers | Normal |
+
+## 6.2 Ruby (`*.rb`)
+
+**LSP Setup:** `gem install solargraph`
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `<SPC>l r` | Execute current file | Normal |
+| `<SPC>l d` | Show document (with LSP) | Normal |
+| `<SPC>l e` | Rename symbol (with LSP) | Normal |
+| `<SPC>l h` | Show line diagnostics (with LSP) | Normal |
+| `<SPC>l x` | Show references (with LSP) | Normal |
+
+## 6.3 JavaScript (`*.js`, `*.jsx`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `<SPC>l r` | Run current file | Normal |
+| `<SPC>l d` | Show document | Normal |
+| `<SPC>l e` | Rename symbol | Normal |
+| `<SPC>l g d` | Generate JSDoc | Normal |
+| `F4` | Import JS word | Normal |
+| `<Leader>ji` | Import JS word | Normal |
+| `<Leader>jf` | Import JS fix | Normal |
+| `<Leader>jg` | Import JS goto | Normal |
+
+## 6.4 TypeScript (`*.ts`, `*.tsx`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `g D` | Jump to type definition | Normal |
+| `<SPC>l d` | Show document | Normal |
+| `<SPC>l e` | Rename symbol | Normal |
+| `<SPC>l f` | Code fix | Normal |
+| `<SPC>l i` | Import | Normal |
+| `<SPC>l m` | Interface implementations (Vim) | Normal |
+| `<SPC>l o` | Organize imports | Normal |
+| `<SPC>l p` | Preview definition | Normal |
+| `<SPC>l r` | Run current file | Normal |
+| `<SPC>l R` | Show references | Normal |
+| `<SPC>l t` | View type | Normal |
+| `<SPC>l D` | Show errors | Normal |
+| `<SPC>l g d` | Generate JSDoc | Normal |
+
+## 6.5 Python (`*.py`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `g d` | Jump to definition | Normal |
+| `<SPC>l r` | Run current file | Normal |
+| `<SPC>l d` | Show document (with LSP) | Normal |
+| `<SPC>l e` | Rename symbol (with LSP) | Normal |
+| `<SPC>l h` | Show line diagnostics (with LSP) | Normal |
+| `<SPC>l x` | Show references (with LSP) | Normal |
+| `<SPC>l i s` | Sort imports (isort) | Normal |
+| `<SPC>l i r` | Remove unused imports (autoflake) | Normal |
+| `<SPC>l i i` | Import name under cursor | Normal |
+| `<SPC>l c r` | Coverage report | Normal |
+| `<SPC>l c s` | Coverage show | Normal |
+| `<SPC>l c e` | Coverage session | Normal |
+| `<SPC>l c f` | Coverage refresh | Normal |
+| `<SPC>l g d` | Generate docstring | Normal |
+| `<SPC>l v l` | List all virtualenvs | Normal |
+| `<SPC>l v d` | Deactivate current virtualenv | Normal |
+
+## 6.6 Rust (`*.rs`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `g d` | Go to definition | Normal |
+| `K` | Show documentation | Normal |
+| `<SPC>l d` | Show documentation | Normal |
+| `<SPC>l e` | Rename symbol (with LSP) | Normal |
+| `<SPC>l g` | Definition in split (without LSP) | Normal |
+| `<SPC>l h` | Show line diagnostics (with LSP) | Normal |
+| `<SPC>l r` | Run current file | Normal |
+| `<SPC>l u` | Show references (without LSP) | Normal |
+| `<SPC>l v` | Definition in vertical split (without LSP) | Normal |
+| `<SPC>l x` | Show references (with LSP) | Normal |
+| `<SPC>l c b` | Cargo build | Normal |
+| `<SPC>l c B` | Cargo bench | Normal |
+| `<SPC>l c c` | Cargo clean | Normal |
+| `<SPC>l c D` | Cargo doc | Normal |
+| `<SPC>l c f` | Cargo fmt | Normal |
+| `<SPC>l c l` | Cargo clippy | Normal |
+| `<SPC>l c r` | Cargo run | Normal |
+| `<SPC>l c t` | Cargo test | Normal |
+| `<SPC>l c u` | Cargo update | Normal |
+
+## 6.7 C/C++ (`*.c`, `*.cpp`, `*.h`, `*.hpp`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `g d` | Go to definition | Normal |
+| `g D` | Go to declaration | Normal |
+| `K` | Show documentation (with LSP) | Normal |
+| `<SPC>l r` | Run current file | Normal |
+| `<SPC>l d` | Show document (with LSP) | Normal |
+| `<SPC>l e` | Rename symbol (with LSP) | Normal |
+| `<SPC>l h` | Show line diagnostics (with LSP) | Normal |
+| `<SPC>l i` | Go to implementation (with LSP) | Normal |
+| `<SPC>l x` | Show references (with LSP) | Normal |
+
+## 6.8 Markdown (`*.md`)
+
+| Keymap | Action | Mode |
+|--------|--------|------|
+| `Ctrl-b` | Insert code block | Normal |
+| `<SPC>l c` | Create table of contents (GFM) | Normal |
+| `<SPC>l C` | Remove table of contents | Normal |
+| `<SPC>l f` | Format code block | Normal |
+| `<SPC>l k` | Add link URL | Normal |
+| `<SPC>l K` | Add link picture | Normal |
+| `<SPC>l p` | Real-time markdown preview | Normal |
+| `<SPC>l r` | Run code in code block | Normal |
+| `<SPC>l t` | Toggle checkbox | Normal |
+| `<SPC>l u` | Update table of contents | Normal |
 
 ---
 
-# 9. Snippets & Completion
+# 7. Snippets & Completion
 
-## 9.1 NeoSnippet
+## 7.1 NeoSnippet
 
 ### Snippet Expansion
 | Keymap | Action | Mode |
@@ -593,7 +598,7 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 | `<C-e>` | Expand snippet target | Visual |
 | `<TAB>` | Jump to next (if expandable) | Select |
 
-## 9.2 Copilot
+## 7.2 Copilot
 
 ### AI Completion
 | Keymap | Action | Mode |
@@ -602,15 +607,17 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 
 ---
 
-# 10. Quickfix & Errors
+# 8. Quickfix & Errors
 
-## 10.1 Quickfix Window
+## 8.1 Quickfix Window
 
 ### Quickfix Control
 | Keymap | Action | Mode |
 |--------|--------|------|
 | `,qc` | Close quickfix window | Normal |
 | `,qo` | Open quickfix window | Normal |
+| `o` | Open entry, keep quickfix focused | Quickfix |
+| `O` | Open entry, keep quickfix visible | Quickfix |
 
 ### Error Navigation
 | Keymap | Action | Mode |
@@ -620,9 +627,9 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 
 ---
 
-# 11. Vim Configuration
+# 9. Vim Configuration
 
-## 11.1 Config Files
+## 9.1 Config Files
 
 ### Edit Config
 | Keymap | Action | Mode |
@@ -643,7 +650,7 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 |--------|--------|------|
 | `,vc` | Execute line as vim command | Normal |
 
-## 11.2 File Info
+## 9.2 File Info
 
 ### Copy Filename
 | Keymap | Action | Mode |
@@ -659,9 +666,9 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 
 ---
 
-# 12. UI & Display
+# 10. UI & Display
 
-## 12.1 Display Options
+## 10.1 Display Options
 
 ### Paste Mode
 | Keymap | Action | Mode |
@@ -680,7 +687,7 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 |--------|--------|------|
 | `<leader>ss` | Toggle spell checking | Normal |
 
-## 12.2 Debug
+## 10.2 Debug
 
 ### Syntax Highlight
 | Keymap | Action | Mode |
@@ -694,9 +701,9 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 
 ---
 
-# 13. Miscellaneous
+# 11. Miscellaneous
 
-## 13.1 Saving
+## 11.1 Saving
 
 ### Quick Save
 | Keymap | Action | Mode |
@@ -704,7 +711,7 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 | `<Leader>w` | Write file | Normal/Insert/Visual |
 | `:W` | Sudo write file | Command |
 
-## 13.2 Scratch Buffers
+## 11.2 Scratch Buffers
 
 ### Temporary Files
 | Keymap | Action | Mode |
@@ -712,7 +719,7 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 | `<leader>q` | Open ~/buffer for scribble | Normal |
 | `<leader>x` | Open ~/buffer.md for markdown | Normal |
 
-## 13.3 Special
+## 11.3 Special
 
 ### Text Cleanup
 | Keymap | Action | Mode |
@@ -742,3 +749,8 @@ These keybindings are applied automatically to any buffer with an active LSP cli
 | `<A-x>` | Alt + x (Linux) |
 | `<leader>` | Leader key (usually `\`) |
 | `<localleader>` | Local leader (usually `,`) |
+
+**Notes:**
+- Keymaps marked "(with LSP)" require the LSP layer to be enabled for that language
+- Keymaps marked "(without LSP)" are only available when LSP is not enabled
+- REPL keymaps require the appropriate REPL tool to be installed (e.g., `ipython` for Python, `irb` for Ruby)

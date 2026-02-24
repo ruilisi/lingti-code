@@ -53,9 +53,9 @@ endfunction
 
 function! s:lsp_go_to_def() abort
   " If a language-specific handler is registered, use it; otherwise LSP definition
-  let l:handler = SpaceVim#mapping#gd#get()
-  if !empty(l:handler)
-    call call(l:handler, [])
+  let Handler = SpaceVim#mapping#gd#get()
+  if !empty(Handler)
+    call call(Handler, [])
   elseif luaeval('#vim.lsp.get_clients({bufnr = 0})') > 0
     lua vim.lsp.buf.definition()
   else

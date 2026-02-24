@@ -62,3 +62,36 @@ When the user invokes `/wechat-article <filepath>`, convert the markdown file to
 
 **Output:** Creates `docs/my-article.html` and copies to clipboard.
 
+### /todo - Task Queue Manager
+
+Manages a `TODO.md` file in the current project root as a sequential task queue.
+
+**Subcommands:**
+
+- `/todo` (no args) — Read `TODO.md` and start working on the **first uncompleted task**. After finishing, ask the user to confirm completion before removing it.
+- `/todo add <task description>` — Append a new task to `TODO.md`. Create the file if it doesn't exist.
+- `/todo list` — Display all remaining tasks.
+- `/todo done` — Remove the first task from `TODO.md` (user confirmed it's done), then show remaining tasks and ask if they want to continue with the next one.
+
+**TODO.md format:**
+
+```markdown
+# TODO
+
+- [ ] First task description
+- [ ] Second task description
+- [ ] Third task description
+```
+
+**Workflow:**
+
+1. When `/todo` is invoked with no args, read `TODO.md`, find the first `- [ ]` item, and start working on it.
+2. After completing the work, present the result and ask: "Task done? Should I mark it complete and move to the next one?"
+3. When the user confirms (or invokes `/todo done`), remove that line from `TODO.md` and show what's next.
+4. Repeat until `TODO.md` is empty.
+
+**Rules:**
+- Always read `TODO.md` fresh before each operation (it may have been edited externally).
+- Never skip tasks — always work top-down.
+- If `TODO.md` doesn't exist or is empty, tell the user "No tasks. Use `/todo add <task>` to add some."
+
