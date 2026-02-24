@@ -109,7 +109,7 @@ function kcp {
   fi
 }
 
-for zxfunc in klogs k_instance_tail_file git_search_commit
+for zxfunc in klogs ktail git_search_commit
 do
   $zxfunc() {
     ~/.lingti/zsh/zx/$0.mjs "$@"
