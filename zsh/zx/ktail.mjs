@@ -1,6 +1,6 @@
 #!/usr/bin/env zx
 
-import { resolveInstance } from "./lib/resolve-instance.mjs";
+import { resolveInstance, getPods } from "./lib/resolve-instance.mjs";
 
 $.shell = "/usr/local/bin/zsh";
 $.prefix += "source ~/.lingti/zsh/k8s.zsh;";
@@ -25,17 +25,7 @@ if (argv.h || argv.help || argv._.length < 2) {
 const [rawInstance, file] = argv._;
 const instance = await resolveInstance(rawInstance);
 
-const pods = (
-  await $`kubectl get pods -l app.kubernetes.io/instance=${instance} -o custom-columns=":metadata.name"`
-).stdout
-  .trim()
-  .split(/\s+/)
-  .filter(Boolean);
-
-if (pods.length === 0) {
-  console.error(`No pods found for instance "${instance}"`);
-  process.exit(1);
-}
+const pods = await getPods(instance);
 
 console.info(`Tailing ${file} on ${pods.length} pod(s): ${pods.join(", ")}`);
 
