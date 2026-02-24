@@ -1,6 +1,6 @@
 #!/usr/bin/env zx
 
-import { resolveInstance } from "./lib/resolve-instance.mjs";
+import { resolveInstance, listInstances } from "./lib/resolve-instance.mjs";
 
 $.shell = "/usr/local/bin/zsh";
 $.prefix += "source ~/.lingti/zsh/k8s.zsh;";
@@ -33,5 +33,10 @@ if (i) {
   await $`kubectl logs -f deployment/${d} --all-containers=true --since=24h --pod-running-timeout=2s 2>&1`;
 } else {
   console.error("Error: specify -i <instance> or -d <deployment>");
+  const available = await listInstances();
+  if (available.length > 0) {
+    console.error(chalk.yellow("\nAvailable instances:"));
+    available.forEach((inst) => console.error(`  ${inst}`));
+  }
   process.exit(1);
 }
