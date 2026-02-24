@@ -195,7 +195,12 @@ cp `f mov` .
 | Command | Description |
 |---------|-------------|
 | `kexec` | Execute k8s pod by regex pod name |
-| `klog` | Show k8s pod log by regex pod name |
+| `klogs` | Show k8s pod log by regex pod name |
+| `ktail <instance> <file>` | Tail file across all pods of an instance |
+| `kdown <instance> <path> <dir>` | Download file from all pods of an instance |
+| `gitr <git-args>` | Run git command across all repos in current dir |
+| `gitcopy [commit] [-n count]` | Format git commits as markdown, copy to clipboard |
+| `qup <file> [-b bucket] [-k key] [-t]` | Upload file to Qiniu cloud |
 
 ---
 

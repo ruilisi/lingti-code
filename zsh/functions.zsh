@@ -52,75 +52,12 @@ function cmd_exists() {
     echo N
   fi
 }
-function qshell_upload() {
-  qshell_setup
-  bucket=assets
-  while getopts "b:f:k:t" o; do
-    case "${o}" in
-      b)
-        bucket=${OPTARG}
-        ;;
-      f)
-        filepath=${OPTARG}
-        ;;
-      k)
-        key=${OPTARG}
-        ;;
-      t)
-        timestamp=true
-        ;;
-      *)
-        echo "Usage: qshell_upload [-b BUCKET] -f FILEPATH [-k KEY] [-t]"
-        return
-        ;;
-    esac
-  done
-  if [[ $key == '' ]]; then
-    key=$(basename $filepath)
-  fi
-  if [[ $timestamp == 'true' ]];then
-    key=`date +%Y%m%dT%H%M%S`_${key}
-  fi
-  qshell rput $bucket $key $filepath
-}
-
-function gitr() {
-  for dir in `ls`; do
-    if [[ -d "$dir" && -d "$dir/.git" ]]; then
-      pushd .
-      echo "$fg[green]$(basename $dir)$reset_color"
-      cd $dir
-      git $*
-      popd
-    fi
-  done
-}
-
-function gitcopy() {
-  n=1
-  while getopts "c:n:t" o; do
-    case "${o}" in
-      c)
-        commit=${OPTARG}
-        ;;
-      n)
-        n=${OPTARG}
-        ;;
-      *)
-        usage
-        ;;
-    esac
-  done
-  prefix=`git remote get-url origin | sed -E 's/git@github.com:/https:\/\/github.com\//g' | sed -E 's/(.*)\.git/\1/'`
-  project_name=`echo $prefix | sed -E 's/.*\/(.*)/\1/'`
-  commits=`git log $commit -n $n --stat --pretty="
-* [$project_name]($prefix/commit/%H) %an: **%s**" | sed 's/^[^*]/> /'`
-  echo $commits
-  which pbcopy &> /dev/null
-  if [[ $? == '0' ]]; then
-    echo $commits | pbcopy
-  fi
-}
+for zxfunc in qup gitr gitcopy
+do
+  $zxfunc() {
+    ~/.lingti/zsh/zx/$0.mjs "$@"
+  }
+done
 function stern {
   finalopts=()
   while [[ $@ != "" ]] do

@@ -206,6 +206,8 @@ This document provides a comprehensive reference for all shell aliases available
 | `kexec -p <project> -n <namespace>` | Execute shell in pod |
 | `kcp -p <project> -s <src> -d <dst>` | Copy from pod |
 | `klogs` | Tail logs |
+| `ktail <instance> <file>` | Tail file across all pods |
+| `kdown <instance> <path> <dir>` | Download file from all pods |
 | `k_force_delete_pod <pod>` | Force delete pod |
 | `k_get_containers_of_pod <pod>` | Get container names |
 | `k_delete_evicted` | Delete evicted pods |

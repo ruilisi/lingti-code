@@ -1,130 +1,106 @@
-NAMESPACE=default
-RUNNING_POD=""
-LEFT_ARGS=""
-VERBOSE=false
-SRC=""
-DST=""
-
 # aliases
 alias k="kubectl"
 alias kpg="kubectl get pods | grep"
 alias ksg="kubectl get service | grep"
 alias k_get_pods_sort_by_time="k get pods --sort-by=.metadata.creationTimestamp"
 
+# Select a running pod by project name. Sets RUNNING_POD and LEFT_ARGS for callers.
+# Usage: getpod -p <project> [-n namespace] [-K context] [-R] [-s src] [-d dst] [-v]
 function getpod {
-  RAN=true
-  function usage ()
-  {
-    echo "Usage :  $0 [options] [--]
-    Options:
-    -K            kubectl context
-    -R            Not randomly select pod
-    -d            Destination
-    -s            Source
-    -n NAMESPACE
-    -p PROJECT
-    -v            Verbose
-    -h            Display this message"
-  }
-  while getopts ":hvs:d:K:Rp:" opt
-  do
+  local random=true verbose=false namespace=default project="" src="" dst="" pod_index
+  OPTIND=1
+
+  while getopts ":hvs:d:K:Rp:n:" opt; do
     case $opt in
-    R) RAN=false          ;;
-    s) SRC=$OPTARG        ;;
-    d) DST=$OPTARG        ;;
-    n) NAMESPACE=$OPTARG  ;;
-    p) PROJECT=$OPTARG    ;;
-    K) KCONTEXT=$OPTARG   ;;
-    v) VERBOSE=true       ;;
-    h) usage; return 0    ;;
-    *) echo -e "\n  Option does not exist: $OPTARG\n"
-       usage; return 1    ;;
+      R) random=false         ;;
+      s) src=$OPTARG          ;;
+      d) dst=$OPTARG          ;;
+      n) namespace=$OPTARG    ;;
+      p) project=$OPTARG      ;;
+      K) KCONTEXT=$OPTARG     ;;
+      v) verbose=true         ;;
+      h) echo "Usage: getpod -p PROJECT [-n NAMESPACE] [-K CONTEXT] [-R] [-s SRC] [-d DST] [-v]"; return 0 ;;
+      *) echo "Unknown option: -$OPTARG"; return 1 ;;
     esac
   done
-  shift $(($OPTIND-1))
+  shift $((OPTIND - 1))
 
-  RUNNING_POD_INDEX=-1
+  if [[ -z "$project" ]]; then
+    echo $fg[red]"Error: -p PROJECT is required"$reset_color
+    return 1
+  fi
+
+  # Export state for callers (kexec, kcp)
+  NAMESPACE=$namespace SRC=$src DST=$dst VERBOSE=$verbose
+  RUNNING_POD="" LEFT_ARGS="$@"
+
+  local -a running_pods
   while true; do
-    echo "kubectl -n $NAMESPACE get pods | grep $PROJECT"
-    ALL_PODS=$(kubectl -n $NAMESPACE get pods | grep "$PROJECT")
-    echo $fg[green]"All Pods:"$reset_color
-    echo $ALL_PODS
-    if  [[ ${#ALL_PODS[@]} == 0 ]]; then
-      echo $fg[red]"Pod not found for $PROJECT"$reset_color
-      break
+    [[ $verbose == true ]] && echo "kubectl -n $namespace get pods | grep $project"
+    local all_pods=$(kubectl -n $namespace get pods | grep "$project")
+
+    if [[ -z "$all_pods" ]]; then
+      echo $fg[red]"No pods found for $project"$reset_color
+      return 1
     fi
-    RUNNING_PODS=($(echo $ALL_PODS | egrep "$PROJECT.* ?[1-9]/[0-9]? *Running" | awk '{print $1}'))
-    if [[ `echo $ALL_PODS | wc -l | trim` != ${#RUNNING_PODS[@]} ]]; then
+
+    echo $fg[green]"All Pods:"$reset_color
+    echo "$all_pods"
+
+    running_pods=("${(@f)$(echo "$all_pods" | awk '/Running/ && $2 ~ /[1-9]\/[0-9]/ {print $1}')}")
+    running_pods=(${running_pods:#})  # remove empty entries
+
+    local total=$(echo "$all_pods" | wc -l | tr -d ' ')
+    if [[ $total -ne ${#running_pods[@]} ]]; then
+      echo $fg[red]'Pods not ready, retrying...'$reset_color
       sleep 2
-      echo $fg[red]'Pods are not ready, wait...'$reset_color
       continue
     fi
-    if [[ ${#RUNNING_PODS[@]} == 0 ]]; then
-      echo "Pod not found for $PROJECT"
-      break
+    if [[ ${#running_pods[@]} -eq 0 ]]; then
+      echo $fg[red]"No running pods for $project"$reset_color
+      return 1
     fi
-    RUNNING_POD_INDEX=$(($RANDOM % ${#RUNNING_PODS[@]} + 1))
-    [[ $RAN == 'true' ]] && break
-    if [ ${#RUNNING_PODS[@]} -gt 1 ];then
-      echo $fg[green]'Running Pods:'$reset_color
-      INDEX=1
-      for i in $RUNNING_PODS;do
-        echo "[$INDEX] $i"
-        let INDEX=${INDEX}+1
-      done
-      echo $fg[green]'Select option of pod to execute:'$reset_color
-      while true;do
-        read RUNNING_POD_INDEX
-        if [[ $RUNNING_POD_INDEX -gt 0 && $RUNNING_POD_INDEX -le ${#RUNNING_PODS[@]} ]];then
-          break
-        else
-          echo 'invalid option...'
-        fi
-      done
-      break
-    fi
+    break
   done
-  RUNNING_POD=$RUNNING_PODS[$RUNNING_POD_INDEX]
-  LEFT_ARGS=$@
+
+  # Select pod: random, single, or interactive
+  if [[ ${#running_pods[@]} -eq 1 || $random == true ]]; then
+    pod_index=$(($RANDOM % ${#running_pods[@]} + 1))
+  else
+    echo $fg[green]'Running Pods:'$reset_color
+    local i
+    for i in {1..${#running_pods[@]}}; do
+      echo "[$i] $running_pods[$i]"
+    done
+    echo $fg[green]'Select pod:'$reset_color
+    while true; do
+      read pod_index
+      [[ $pod_index -gt 0 && $pod_index -le ${#running_pods[@]} ]] && break
+      echo 'Invalid option...'
+    done
+  fi
+
+  RUNNING_POD=$running_pods[$pod_index]
 }
 
 function kexec {
-  getpod $@
-  if [[ $RUNNING_POD != "" ]]; then
-    echo "kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c $LEFT_ARGS"
-    kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c $LEFT_ARGS
-  fi
+  getpod $@ || return 1
+  echo "kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c $LEFT_ARGS"
+  kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c $LEFT_ARGS
 }
 
-function cmd {
-  if $VERBOSE; then
-    echo "Running: $fg[green]$1$reset_color"
-  fi
-  eval $1
-}
 function kcp {
-  getpod $@
-  if [[ $RUNNING_POD != "" ]]; then
-    cmd "kubectl -n $NAMESPACE cp $RUNNING_POD:$SRC $DST"
-  fi
+  getpod $@ || return 1
+  [[ $VERBOSE == true ]] && echo "Running: $fg[green]kubectl -n $NAMESPACE cp $RUNNING_POD:$SRC $DST$reset_color"
+  kubectl -n $NAMESPACE cp $RUNNING_POD:$SRC $DST
 }
 
-for zxfunc in klogs ktail git_search_commit
+for zxfunc in klogs ktail git_search_commit kdown
 do
   $zxfunc() {
     ~/.lingti/zsh/zx/$0.mjs "$@"
   }
 done
-
-
-function k_instance_down_file {
-  instance=$1
-  file_path=$2
-  local_dir=$3
-  for pod in `k get pods -l app.kubernetes.io/instance=$instance -o custom-columns=":metadata.name"`; do
-    k cp $pod:$file_path $local_dir/${pod}_$(basename $file_path) --retries=10
-  done
-}
 function k_delete_evicted {
   k delete pod `k get pods | grep Evicted | awk '{print $1}'`
 }
