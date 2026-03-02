@@ -25,3 +25,4 @@ settings.local.json
 .install-progress
 crons.json
 skills/
+ai-switch.*
