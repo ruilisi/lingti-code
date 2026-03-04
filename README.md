@@ -60,7 +60,7 @@ cd ~/.lingti && git pull --rebase && rake update
 ├── tmux/                 # Tmux config
 ├── claude/               # Claude Code config
 ├── bin/                  # CLI utilities (lingti command)
-└── doc/                  # Documentation
+└── docs/                 # Documentation
 ```
 
 ---
@@ -99,12 +99,12 @@ User overrides in `~/.tmux.conf.user`.
 | Document | Description |
 |----------|-------------|
 | [docs/ALIASES.md](docs/ALIASES.md) | Shell aliases reference |
-| [doc/keymaps.md](doc/keymaps.md) | Keyboard shortcuts (Zsh, Tmux, Vim) |
-| [doc/vim/loading.md](doc/vim/loading.md) | How nvim loads |
-| [doc/vim/coding.md](doc/vim/coding.md) | Coding features |
-| [doc/vim/navigation.md](doc/vim/navigation.md) | Navigation shortcuts |
-| [doc/vim/manage_plugins.md](doc/vim/manage_plugins.md) | Plugin management |
-| [doc/vim/override.md](doc/vim/override.md) | Vim customization |
+| [docs/vim-keymaps.md](docs/vim-keymaps.md) | Keyboard shortcuts (Zsh, Tmux, Vim) |
+| [docs/vim/loading.md](docs/vim/loading.md) | How nvim loads |
+| [docs/vim/coding.md](docs/vim/coding.md) | Coding features |
+| [docs/vim/navigation.md](docs/vim/navigation.md) | Navigation shortcuts |
+| [docs/vim/manage_plugins.md](docs/vim/manage_plugins.md) | Plugin management |
+| [docs/vim/override.md](docs/vim/override.md) | Vim customization |
 | [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) | Lingti product family |
 | [FAQ.md](FAQ.md) | FAQ |
 
@@ -128,4 +128,4 @@ DEBUG=true rake install  # Dry run
 
 ## License
 
-[MIT](LICENSE) · [Credits](doc/credits.md) · [Changelog](CHANGELOG.md)
+[MIT](LICENSE) · [Credits](docs/credits.md) · [Changelog](CHANGELOG.md)

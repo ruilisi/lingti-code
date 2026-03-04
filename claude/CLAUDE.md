@@ -13,9 +13,10 @@ Always place compiled binaries and build outputs in a `dist/` folder instead of 
 
 ## Go Code Style
 
-Always use the modern Go 1.22+ range-over-integer syntax for counting loops:
-- `for i := range n {` instead of `for i := 0; i < n; i++ {`
-- `for range n {` when the loop variable is unused
+Always use modern Go syntax:
+- Use `any` instead of `interface{}`
+- Use `for i := range n {` instead of `for i := 0; i < n; i++ {` (Go 1.22+)
+- Use `for range n {` when the loop variable is unused
 
 ## Skills
 

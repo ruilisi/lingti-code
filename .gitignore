@@ -26,3 +26,4 @@ settings.local.json
 crons.json
 skills/
 ai-switch.*
+chat.*
