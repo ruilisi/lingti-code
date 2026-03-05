@@ -105,6 +105,7 @@ User overrides in `~/.tmux.conf.user`.
 | [docs/vim/navigation.md](docs/vim/navigation.md) | Navigation shortcuts |
 | [docs/vim/manage_plugins.md](docs/vim/manage_plugins.md) | Plugin management |
 | [docs/vim/override.md](docs/vim/override.md) | Vim customization |
+| [docs/vim/lsp.md](docs/vim/lsp.md) | LSP setup, clients & keymaps |
 | [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) | Lingti product family |
 | [FAQ.md](FAQ.md) | FAQ |
 
