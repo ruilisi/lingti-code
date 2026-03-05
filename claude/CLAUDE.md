@@ -18,7 +18,39 @@ Always use modern Go syntax:
 - Use `for i := range n {` instead of `for i := 0; i < n; i++ {` (Go 1.22+)
 - Use `for range n {` when the loop variable is unused
 
+## Tailwind CSS Style
+
+When writing or editing Tailwind CSS classes:
+- Group classes in this order: layout → spacing → sizing → typography → color → borders → effects → transitions
+- Prefer `gap-*` over `space-x-*` / `space-y-*` for flex/grid children
+- Always add `shrink-0` on fixed-size flex children
+- Use `min-h-0` on flex children that need to scroll internally
+- Avoid arbitrary values (`w-[137px]`) — use the nearest Tailwind scale token instead
+- Use `clsx` / `cn()` for conditional classes, not string interpolation
+- Avoid redundant or contradictory classes (e.g. `flex block`, `p-4 px-2`)
+
 ## Skills
+
+### /tw-optimize - Optimize Tailwind CSS classes in a file
+
+When the user invokes `/tw-optimize <filepath>`:
+
+1. Read the file at the specified path
+2. For each element with Tailwind classes, apply these optimizations:
+   - **Remove redundant/contradictory classes** (e.g. `flex block`, `p-4 px-2` where px-2 is overridden)
+   - **Replace arbitrary values** with nearest Tailwind scale equivalent (e.g. `text-[13px]` → `text-[13px]` only if no scale token fits; otherwise `text-sm`)
+   - **Sort classes** in order: layout (`flex`, `grid`, `block`, `hidden`) → positioning (`absolute`, `relative`, `z-*`) → spacing (`p-*`, `m-*`, `gap-*`) → sizing (`w-*`, `h-*`) → typography (`text-*`, `font-*`, `leading-*`) → color (`bg-*`, `text-*` color, `border-*` color) → borders (`border`, `rounded-*`) → effects (`shadow-*`, `opacity-*`) → transitions/animations
+   - **Add missing `shrink-0`** on fixed-size items inside flex containers
+   - **Add missing `min-h-0`** on flex children that contain scrollable content
+   - **Replace repeated class strings** that appear 3+ times with a `const` at the top of the file
+3. Edit the file in place with the optimized classes
+4. Report a summary of changes made
+
+**Example usage:**
+```
+/tw-optimize src/pages/bot_chat.tsx
+/tw-optimize src/components/Button.tsx
+```
 
 ### /wechat-article - Convert Markdown to WeChat Article HTML
 
@@ -62,6 +94,24 @@ When the user invokes `/wechat-article <filepath>`, convert the markdown file to
 ```
 
 **Output:** Creates `docs/my-article.html` and copies to clipboard.
+
+### /ac - Add and Commit
+
+When the user invokes `/ac`:
+
+1. Run `git status` to see staged and unstaged changes
+2. Run `git diff` (staged + unstaged) and `git log --oneline -5` to understand context
+3. Stage all relevant changes with `git add` (specific files, not `-A` blindly — avoid secrets/binaries)
+4. Draft a concise commit message (1-2 sentences, imperative mood, focus on "why" not "what")
+5. Commit using a HEREDOC to ensure correct formatting — do NOT include "Co-Authored-By" lines
+6. Run `git status` to confirm success
+
+**Example usage:**
+```
+/ac
+```
+
+---
 
 ### /todo - Task Queue Manager
 
