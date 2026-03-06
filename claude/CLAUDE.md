@@ -1,5 +1,13 @@
 # Global Claude Code Instructions
 
+## Package Manager
+
+Always use **bun** instead of yarn or npm for all JavaScript/TypeScript package management and script running:
+- Use `bun install` instead of `npm install` or `yarn`
+- Use `bun add` instead of `npm install <pkg>` or `yarn add`
+- Use `bun run <script>` instead of `npm run` or `yarn run`
+- Lock file is `bun.lock`
+
 ## Git Commits
 
 When creating git commits, do not include the "Co-Authored-By: Claude" line in commit messages.
