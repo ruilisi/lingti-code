@@ -12,6 +12,12 @@ function! lingti#before() abort
         \ 'disable_sync_scroll': 1,
         \ }
 
+  " Auto-detect //go:build tags and set GoBuildTags on file open
+  augroup go_build_tags
+    autocmd!
+    autocmd FileType go call s:set_go_build_tags()
+  augroup END
+
   " Auto-detect external file changes (e.g. from Claude Code edits)
   " Poll file mtime every 1s; force :edit to reload buffer and trigger mkdp refresh
   set autoread
@@ -67,7 +73,12 @@ function! s:global_lsp_mappings() abort
   if luaeval('#vim.lsp.get_clients({bufnr = 0})') > 0
     nnoremap <silent><buffer> K :call SpaceVim#lsp#show_doc()<CR>
     nnoremap <silent><buffer> gD :<C-u>call SpaceVim#lsp#go_to_typedef()<CR>
-    nnoremap <silent><buffer> gr :lua vim.lsp.buf.references()<CR>
+    if &filetype ==# 'go'
+      nnoremap <silent><buffer> gr :GoReferrers<CR>
+      nnoremap <silent><buffer> <space>lx :GoReferrers<CR>
+    else
+      nnoremap <silent><buffer> gr :lua vim.lsp.buf.references()<CR>
+    endif
     nnoremap <silent><buffer> gi :lua vim.lsp.buf.implementation()<CR>
     nnoremap <silent><buffer> <leader>rn :lua vim.lsp.buf.rename()<CR>
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 'd'],
@@ -77,6 +88,18 @@ function! s:global_lsp_mappings() abort
     call SpaceVim#mapping#space#langSPC('nnoremap', ['l', 's'],
           \ 'call SpaceVim#lsp#show_line_diagnostics()', 'show-line-diagnostics', 1)
   endif
+endfunction
+
+function! s:set_go_build_tags() abort
+  for lnum in range(1, min([5, line('$')]))
+    let m = matchstr(getline(lnum), '^//go:build\s\+\zs\S\+')
+    if !empty(m)
+      call timer_start(3000, {-> execute('GoBuildTags ' . m, '')})
+      echom '[go] build tag: ' . m
+      return
+    endif
+  endfor
+  call timer_start(3000, {-> execute('GoBuildTags', '')})
 endfunction
 
 function! lingti#after() abort
