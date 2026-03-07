@@ -75,7 +75,6 @@ function! s:global_lsp_mappings() abort
     nnoremap <silent><buffer> gD :<C-u>call SpaceVim#lsp#go_to_typedef()<CR>
     if &filetype ==# 'go'
       nnoremap <silent><buffer> gr :GoReferrers<CR>
-      nnoremap <silent><buffer> <space>lx :GoReferrers<CR>
     else
       nnoremap <silent><buffer> gr :lua vim.lsp.buf.references()<CR>
     endif
