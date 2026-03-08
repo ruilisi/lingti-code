@@ -11,6 +11,7 @@ pathAppend() {
 PATH=$(echo "$PATH" | awk -v RS=':' -v ORS=":" '!a[$1]++{if (NR > 1) printf ORS; printf $a[$1]}')
 
 pathAppend "$HOME/bin"
+pathAppend "$HOME/.lingti/bin"
 pathAppend "$HOME/.lingti/bin/lingti"
 pathAppend "$HOME/.local/bin:$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin"
 if [[ `uname` == "Darwin" ]]; then
