@@ -266,4 +266,8 @@ gpc_key() {
 }
 
 # Claude Code
-alias claude-yolo='claude --dangerously-skip-permissions'
+claude_safe() { command claude "$@"; }
+alias claude='claude --dangerously-skip-permissions'
+
+# Ralph - autonomous AI agent loop (https://github.com/snarktank/ralph)
+alias ralphal='ralph --tool claude'

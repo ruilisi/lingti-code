@@ -44,7 +44,7 @@ cd ~/.lingti && git pull --rebase && rake update
 | **Multiplexer** | Tmux with vim keybindings, `Ctrl-a` prefix, vim-tmux-navigator |
 | **Git** | Sensible defaults, extensive aliases (`ga`, `gc`, `gd`, `gfr`…), commitlint |
 | **Tools** | asdf version manager, ctags, IRB/Pry enhancements |
-| **AI** | [Claude Code](https://claude.ai/code) CLI config, notification hooks, custom status line |
+| **AI** | [Claude Code](https://claude.ai/code) CLI config, notification hooks, custom status line, `ralphal` autonomous agent loop |
 
 ---
 
@@ -83,6 +83,25 @@ Or add to `SpaceVim.d/init.toml`:
 repo = "tpope/vim-surround"
 merged = false
 ```
+
+### AI Agent Loop (ralphal)
+
+`ralphal` runs [Ralph](https://github.com/snarktank/ralph) with Claude Code — an autonomous loop that implements tasks from a `prd.json` file, committing after each iteration until all stories are done or the iteration limit is reached.
+
+```bash
+ralphal        # run up to 10 iterations with Claude Code
+ralphal 5      # run up to 5 iterations
+```
+
+**Project setup** (run from your project directory):
+
+1. Create `prd.json` with your tasks (see [Ralph docs](https://github.com/snarktank/ralph))
+2. Create `CLAUDE.md` with instructions for the agent
+3. Run `ralphal`
+
+State files (`progress.txt`, `.last-branch`, `archive/`) are written to the current working directory. Ralph detects branch changes and archives previous run artifacts automatically.
+
+---
 
 ### Git
 
