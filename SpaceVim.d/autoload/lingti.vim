@@ -12,6 +12,7 @@ function! lingti#before() abort
         \ 'disable_sync_scroll': 1,
         \ }
 
+
   " Auto-detect //go:build tags and set GoBuildTags on file open
   augroup go_build_tags
     autocmd!
@@ -102,6 +103,7 @@ function! s:set_go_build_tags() abort
 endfunction
 
 function! lingti#after() abort
+
   " Override SPC s P to use quickfix instead of FlyGrep
   " Note: Must use SpaceVim#mapping#space#def (immediate) not SpaceVim#custom#SPC (queued before bootstrap_after)
   call SpaceVim#mapping#space#def('nnoremap', ['s', 'P'], 'call SearchWordUnderCursorCount()', 'search word under cursor (quickfix)', 1)

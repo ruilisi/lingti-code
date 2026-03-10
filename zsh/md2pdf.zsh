@@ -12,6 +12,7 @@ md2pdf() {
     --metadata title="" \
     --highlight-style=tango \
     --embed-resources \
+    --mathjax \
     -H <(cat <<'CSS'
 <style>
   body { font-family: "Heiti SC", "PingFang SC", sans-serif; font-size: 14px; line-height: 1.6; max-width: 860px; margin: 40px auto; padding: 0 40px; color: #222; }
