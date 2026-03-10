@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# html2img — Convert an HTML file to an image (default: PNG)
+#
+# Usage:
+#   html2img <input.html> [output.png]
+#   html2img <input.html> -o <output.png>
+#   html2img <input.html> --width 1200 --height 630
+#   html2img <input.html> --format jpg
+#
+# Options:
+#   -o, --output  Output file path (default: same dir as input, .png/.jpg)
+#   --width       Viewport width  (default: 1200)
+#   --height      Viewport height (default: 630)
+#   --format      Image format: png | jpg  (default: png)
+#   -h, --help    Show this help
+
+set -euo pipefail
+
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+usage() {
+  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+  exit 0
+}
+
+die() { echo "html2img: error: $*" >&2; exit 1; }
+
+[[ -x "$CHROME" ]] || die "Google Chrome not found at: $CHROME"
+
+# ── Argument parsing ──────────────────────────────────────
+INPUT=""
+OUTPUT=""
+WIDTH=1200
+HEIGHT=630
+FORMAT="png"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)    usage ;;
+    -o|--output)  OUTPUT="$2"; shift 2 ;;
+    --width)      WIDTH="$2";  shift 2 ;;
+    --height)     HEIGHT="$2"; shift 2 ;;
+    --format)     FORMAT="$2"; shift 2 ;;
+    -*)           die "unknown option: $1" ;;
+    *)
+      if [[ -z "$INPUT" ]]; then INPUT="$1"
+      elif [[ -z "$OUTPUT" ]]; then OUTPUT="$1"
+      else die "unexpected argument: $1"
+      fi
+      shift ;;
+  esac
+done
+
+[[ -z "$INPUT" ]] && { usage; }
+[[ -f "$INPUT" ]] || die "file not found: $INPUT"
+
+# Normalise format
+FORMAT="$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')"
+[[ "$FORMAT" == "jpg" ]] && FORMAT="jpeg"
+[[ "$FORMAT" == "jpeg" || "$FORMAT" == "png" ]] || die "unsupported format: $FORMAT (use png or jpg)"
+
+# Chrome --screenshot only supports PNG; for JPEG we convert after
+CHROME_FORMAT="png"
+OUT_EXT="png"; [[ "$FORMAT" == "jpeg" ]] && OUT_EXT="jpg"
+
+# Derive output path
+if [[ -z "$OUTPUT" ]]; then
+  OUTPUT="${INPUT%.*}.${OUT_EXT}"
+fi
+
+ABS_INPUT="$(cd "$(dirname "$INPUT")" && pwd)/$(basename "$INPUT")"
+mkdir -p "$(dirname "$OUTPUT")"
+ABS_OUTPUT="$(cd "$(dirname "$OUTPUT")" && pwd)/$(basename "$OUTPUT")"
+
+# ── Capture ───────────────────────────────────────────────
+TMPOUT="$ABS_OUTPUT"
+if [[ "$FORMAT" == "jpeg" ]]; then
+  TMPOUT="${ABS_OUTPUT%.jpg}.png"
+fi
+
+"$CHROME" \
+  --headless=new \
+  --disable-gpu \
+  --no-sandbox \
+  --disable-dev-shm-usage \
+  --hide-scrollbars \
+  --window-size="${WIDTH},${HEIGHT}" \
+  --screenshot="$TMPOUT" \
+  "file://${ABS_INPUT}" 2>/dev/null
+
+# Convert PNG → JPEG if requested
+if [[ "$FORMAT" == "jpeg" && "$TMPOUT" != "$ABS_OUTPUT" ]]; then
+  if command -v sips &>/dev/null; then
+    sips -s format jpeg -s formatOptions 90 "$TMPOUT" --out "$ABS_OUTPUT" &>/dev/null
+    rm -f "$TMPOUT"
+  else
+    mv "$TMPOUT" "$ABS_OUTPUT"
+    echo "html2img: note: sips not found, saved as PNG (renamed to .jpg)"
+  fi
+fi
+
+SIZE="$(du -sh "$ABS_OUTPUT" | cut -f1)"
+echo "Saved → $ABS_OUTPUT  ($SIZE)"
