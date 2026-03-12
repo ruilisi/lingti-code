@@ -27,3 +27,4 @@ crons.json
 skills/
 ai-switch.*
 chat.*
+*.pid

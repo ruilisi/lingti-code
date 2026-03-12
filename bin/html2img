@@ -4,34 +4,34 @@
 # Usage:
 #   html2img <input.html> [output.png]
 #   html2img <input.html> -o <output.png>
-#   html2img <input.html> --width 1200 --height 630
+#   html2img <input.html> --width 1200
 #   html2img <input.html> --format jpg
 #
 # Options:
 #   -o, --output  Output file path (default: same dir as input, .png/.jpg)
 #   --width       Viewport width  (default: 1200)
-#   --height      Viewport height (default: 630)
 #   --format      Image format: png | jpg  (default: png)
 #   -h, --help    Show this help
+#
+# Captures the full page height automatically using Puppeteer.
 
 set -euo pipefail
 
-CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+PUPPETEER_MODULE="/Users/alex/.nvm/versions/node/v24.13.0/lib/node_modules/puppeteer"
 
 usage() {
-  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 }
 
 die() { echo "html2img: error: $*" >&2; exit 1; }
 
-[[ -x "$CHROME" ]] || die "Google Chrome not found at: $CHROME"
+[[ -d "$PUPPETEER_MODULE" ]] || die "Puppeteer not found at: $PUPPETEER_MODULE"
 
 # ── Argument parsing ──────────────────────────────────────
 INPUT=""
 OUTPUT=""
 WIDTH=1200
-HEIGHT=630
 FORMAT="png"
 
 while [[ $# -gt 0 ]]; do
@@ -39,8 +39,8 @@ while [[ $# -gt 0 ]]; do
     -h|--help)    usage ;;
     -o|--output)  OUTPUT="$2"; shift 2 ;;
     --width)      WIDTH="$2";  shift 2 ;;
-    --height)     HEIGHT="$2"; shift 2 ;;
     --format)     FORMAT="$2"; shift 2 ;;
+    --height)     shift 2 ;;  # ignored — full page height is auto-detected
     -*)           die "unknown option: $1" ;;
     *)
       if [[ -z "$INPUT" ]]; then INPUT="$1"
@@ -59,8 +59,6 @@ FORMAT="$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')"
 [[ "$FORMAT" == "jpg" ]] && FORMAT="jpeg"
 [[ "$FORMAT" == "jpeg" || "$FORMAT" == "png" ]] || die "unsupported format: $FORMAT (use png or jpg)"
 
-# Chrome --screenshot only supports PNG; for JPEG we convert after
-CHROME_FORMAT="png"
 OUT_EXT="png"; [[ "$FORMAT" == "jpeg" ]] && OUT_EXT="jpg"
 
 # Derive output path
@@ -72,32 +70,34 @@ ABS_INPUT="$(cd "$(dirname "$INPUT")" && pwd)/$(basename "$INPUT")"
 mkdir -p "$(dirname "$OUTPUT")"
 ABS_OUTPUT="$(cd "$(dirname "$OUTPUT")" && pwd)/$(basename "$OUTPUT")"
 
-# ── Capture ───────────────────────────────────────────────
-TMPOUT="$ABS_OUTPUT"
-if [[ "$FORMAT" == "jpeg" ]]; then
-  TMPOUT="${ABS_OUTPUT%.jpg}.png"
-fi
+# ── Capture via Puppeteer ─────────────────────────────────
+node - "$ABS_INPUT" "$ABS_OUTPUT" "$WIDTH" "$FORMAT" "$PUPPETEER_MODULE" <<'EOF'
+const [,, inputPath, outputPath, width, format, modulePath] = process.argv;
 
-"$CHROME" \
-  --headless=new \
-  --disable-gpu \
-  --no-sandbox \
-  --disable-dev-shm-usage \
-  --hide-scrollbars \
-  --window-size="${WIDTH},${HEIGHT}" \
-  --screenshot="$TMPOUT" \
-  "file://${ABS_INPUT}" 2>/dev/null
+(async () => {
+  const puppeteer = require(modulePath);
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  });
+  const page = await browser.newPage();
 
-# Convert PNG → JPEG if requested
-if [[ "$FORMAT" == "jpeg" && "$TMPOUT" != "$ABS_OUTPUT" ]]; then
-  if command -v sips &>/dev/null; then
-    sips -s format jpeg -s formatOptions 90 "$TMPOUT" --out "$ABS_OUTPUT" &>/dev/null
-    rm -f "$TMPOUT"
-  else
-    mv "$TMPOUT" "$ABS_OUTPUT"
-    echo "html2img: note: sips not found, saved as PNG (renamed to .jpg)"
-  fi
-fi
+  await page.setViewport({ width: parseInt(width), height: 800 });
+  await page.goto(`file://${inputPath}`, { waitUntil: 'networkidle0', timeout: 30000 });
+
+  // Wait for fonts/images to settle
+  await new Promise(r => setTimeout(r, 500));
+
+  await page.screenshot({
+    path: outputPath,
+    fullPage: true,
+    type: format === 'jpeg' ? 'jpeg' : 'png',
+    ...(format === 'jpeg' ? { quality: 90 } : {}),
+  });
+
+  await browser.close();
+})().catch(e => { console.error(e); process.exit(1); });
+EOF
 
 SIZE="$(du -sh "$ABS_OUTPUT" | cut -f1)"
 echo "Saved → $ABS_OUTPUT  ($SIZE)"
