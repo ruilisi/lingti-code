@@ -1,0 +1,21 @@
+#
+# Executes commands at login post-zshrc.
+#
+
+# Compile the omz completion dump in the background to speed up future starts.
+{
+  zcompdump="${ZDOTDIR:-$HOME}/.zcompdump"
+  if [[ -s "$zcompdump" && (! -s "${zcompdump}.zwc" || "$zcompdump" -nt "${zcompdump}.zwc") ]]; then
+    zcompile "$zcompdump"
+  fi
+} &!
+
+# Print a random, hopefully interesting, adage.
+if [[ -o INTERACTIVE && -t 2 ]]; then
+  if (( $+commands[fortune] )); then
+    fortune -s
+    print
+  fi
+fi >&2
+
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"

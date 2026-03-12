@@ -1,7 +1,19 @@
-# Source Prezto.
-if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
-  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
-fi
+export ZSH="$HOME/.oh-my-zsh"
+export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-# Customize to your needs...
+ZSH_THEME="agnoster"
+
+plugins=(
+  git
+  macos
+  ssh-agent
+  zsh-syntax-highlighting
+  zsh-history-substring-search
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# Load lingti configs
 for config_file ($HOME/.lingti/zsh/*.zsh) source $config_file
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
