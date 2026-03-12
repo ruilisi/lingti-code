@@ -139,7 +139,7 @@ function k_force_delete_pod () {
 function k_get_containers_of_pod {
   k get pods $1 -o jsonpath='{.spec.containers[*].name}*'
 }
-function set_k8s_context_core {
+function set_k8s_context {
   C=$1
   if [[ "$C" == "" ]]; then
     echo "Select your context:"

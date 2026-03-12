@@ -53,9 +53,7 @@ alias ae='vim $lingti/zsh/aliases.zsh' #alias edit
 alias gar="killall -HUP -u \"$USER\" zsh"  #global alias reload
 
 # vim using
-mvim --version > /dev/null 2>&1
-MACVIM_INSTALLED=$?
-if [ $MACVIM_INSTALLED -eq 0 ]; then
+if (( $+commands[mvim] )); then
   alias vim="mvim -v"
 fi
 
@@ -70,7 +68,7 @@ alias ze='vim ~/.zshrc'
 
 # Git Aliases (most provided by omz-git plugin in ~/.zsh.after/)
 # Custom aliases not covered by oh-my-zsh git plugin:
-unalias gs
+unalias gs 2>/dev/null || true  # prezto defined gs; omz does not
 alias gcim='git ci -m'
 alias gci='git ci'
 alias guns='git unstage'
@@ -80,7 +78,7 @@ alias gdf="git diff-tree --no-commit-id --name-only -r"
 alias gsst='git show --shortstat --format=""' # show only total lines changed
 alias gnb='git nb' # new branch aka checkout -b
 alias gdmb='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
-alias gpb='git push origin "$(git-branch-current 2> /dev/null):build"'
+alias gpb='git push origin "$(git_current_branch 2> /dev/null):build"'
 git_rebase_to_origin() {
   BRANCH=${1:-master}
   DIRTY=false
@@ -262,7 +260,7 @@ gpc_key() {
     return 1
   fi
   shift
-  GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes" git push --set-upstream origin "$(git-branch-current 2>/dev/null)" "$@"
+  GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes" git push --set-upstream origin "$(git_current_branch 2>/dev/null)" "$@"
 }
 
 # Claude Code

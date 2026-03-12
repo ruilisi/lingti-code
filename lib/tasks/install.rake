@@ -5,7 +5,7 @@ INSTALL_STEPS = [
   { name: 'homebrew',      desc: 'Homebrew packages',    platform: :macos },
   { name: 'rvm_binstubs',  desc: 'RVM Bundler support' },
   { name: 'link_files',    desc: 'Symlink config files' },
-  { name: 'prezto',        desc: 'ZSH/Prezto setup' },
+  { name: 'ohmyzsh',       desc: 'ZSH/oh-my-zsh setup' },
   { name: 'spacevim',      desc: 'SpaceVim setup' },
   { name: 'asdf',          desc: 'ASDF version manager' },
   { name: 'claude_code',   desc: 'Claude Code CLI' },
@@ -31,7 +31,7 @@ def run_step(name)
   when 'homebrew'      then install_homebrew
   when 'rvm_binstubs'  then install_rvm_binstubs
   when 'link_files'    then Rake::Task['link_files'].execute
-  when 'prezto'        then Rake::Task['install_prezto'].execute
+  when 'ohmyzsh'       then Rake::Task['install_ohmyzsh'].execute
   when 'spacevim'      then Rake::Task['install_spacevim'].execute
   when 'asdf'          then Rake::Task['install_asdf'].execute
   when 'claude_code'   then Rake::Task['install_claude_code'].execute
@@ -105,6 +105,18 @@ task :link_files do
   install_files(Dir.glob('ctags/*')) if want_to_install?('ctags config (better js/ruby support)')
   install_files(Dir.glob('tmux/*')) if want_to_install?('tmux config')
   install_files(Dir.glob('vimify/*')) if want_to_install?('vimification of command line tools')
+  if want_to_install?('zsh config files')
+    install_files(Dir.glob('zsh/zshrc'), :symlink)
+    install_files(Dir.glob('zsh/zshenv'), :symlink)
+    install_files(Dir.glob('zsh/zprofile'), :symlink)
+    install_files(Dir.glob('zsh/zlogin'), :symlink)
+    install_files(Dir.glob('zsh/zlogout'), :symlink)
+    # Remove old prezto symlinks if present
+    %w[~/.zprezto ~/.zpreztorc].each do |f|
+      path = File.expand_path(f)
+      File.unlink(path) if File.symlink?(path)
+    end
+  end
   run %(
     rm -rf ~/.tmux/plugins/tpm
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
