@@ -84,6 +84,20 @@ repo = "tpope/vim-surround"
 merged = false
 ```
 
+### Yolo Mode (`yolo`)
+
+`yolo` launches Claude Code with `--dangerously-skip-permissions`, skipping all permission prompts.
+
+```bash
+yolo                          # interactive session
+yolo -c                       # continue last conversation
+yolo -p "explain this repo"   # one-shot prompt
+yolo --model opus             # use a specific model
+yolo -p "summarize README" > out.txt  # pipe output
+```
+
+---
+
 ### AI Agent Loop (ralphal)
 
 `ralphal` runs [Ralph](https://github.com/snarktank/ralph) with Claude Code — an autonomous loop that implements tasks from a `prd.json` file, committing after each iteration until all stories are done or the iteration limit is reached.

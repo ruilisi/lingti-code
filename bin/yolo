@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# cc - Claude Code with auto-permit (yolo) mode
+exec claude --dangerously-skip-permissions "$@"
