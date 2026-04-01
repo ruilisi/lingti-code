@@ -2,6 +2,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
 ZSH_THEME="agnoster"
+DEFAULT_USER="$USER"
 
 plugins=(
   git
@@ -19,7 +20,9 @@ for config_file ($HOME/.lingti/zsh/*.zsh) source $config_file
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # bun completions
-[ -s "/root/.bun/_bun" ] && source "/root/.bun/_bun"
+[ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
+# OpenClaw Completion
+source "/Users/alex/.openclaw/completions/openclaw.zsh"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
