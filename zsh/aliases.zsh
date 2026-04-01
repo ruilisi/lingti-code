@@ -24,6 +24,7 @@ alias lip='lingti init-plugins'
 psm() {
   ps aux | awk 'NR>1 {$5=int($5/1024)"M";$6=int($6/1024)"M";}{ print;}'
 }
+alias psmem='ps -eo user,pid,pcpu,pmem,rss,etimes,args --sort=-%mem | awk '\''NR==1{print "USER", "PID", "%CPU", "%MEM", "RSS", "DURATION", "MEM(MB)", "COMMAND"} NR>1{h=int($6/3600); m=int(($6%3600)/60); s=int($6%60); duration=h"h"m"m"s"s"; mem=int($5/1024)"MB"; command=$0; for(i=1;i<=6;i++) sub(/^ *[^ ]+ +/, "", command); print $1, $2, $3, $4, $5, duration, mem, command}'\'' | column -t'
 # Moving around
 alias cdb='cd -'
 alias cls='clear;ls'
@@ -122,6 +123,19 @@ alias tftl='tail -f log/test.log'
 
 alias ka9='killall -9'
 alias k9='kill -9'
+
+# po <pid>: get standard output and standard error of process id
+po() {
+  if [ -z "$1" ]; then
+    echo "Usage: po <pid>"
+    return 1
+  fi
+  if command -v peekfd >/dev/null; then
+    sudo peekfd -8 "$1" 1 2
+  else
+    sudo strace -p "$1" -s 8192 -e write=1,2
+  fi
+}
 
 # Gem install
 alias sgi='sudo gem install --no-ri --no-rdoc'
