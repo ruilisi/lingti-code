@@ -318,6 +318,7 @@ This document provides a comprehensive reference for all shell aliases available
 |-------|---------|-------------|
 | `ka9` | `killall -9` | Kill all by name |
 | `k9` | `kill -9` | Kill by PID |
+| `po` | `po <pid>` | Get stdout and stderr of a process ID |
 | `top_by_memory` | `top -o %MEM` | Top sorted by memory |
 
 ### Vim
