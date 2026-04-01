@@ -17,3 +17,10 @@ source $ZSH/oh-my-zsh.sh
 for config_file ($HOME/.lingti/zsh/*.zsh) source $config_file
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# bun completions
+[ -s "/root/.bun/_bun" ] && source "/root/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
