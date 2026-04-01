@@ -419,7 +419,7 @@ tmux_conf_urlscan_options="--compact --dedupe"
 #set -g status-position top
 
 # move current window to the first position
-bind T swap-window -t 1
+bind T move-window -t 0 \; move-window -r
 
 
 # -- tpm -----------------------------------------------------------------------
