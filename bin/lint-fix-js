@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Lint and auto-fix a JavaScript/TypeScript project using ESLint via bun
+
+set -e
+
+PROJECT_DIR="${1:-.}"
+
+cd "$PROJECT_DIR"
+
+if [ -f "package.json" ] && grep -q '"lint:fix"' package.json; then
+  bun run lint:fix
+elif [ -f "package.json" ] && grep -q '"lint"' package.json; then
+  bun run lint --fix
+elif command -v bunx &>/dev/null; then
+  bunx eslint . --fix
+else
+  echo "Error: no lint script found in package.json and bunx not available" >&2
+  exit 1
+fi
