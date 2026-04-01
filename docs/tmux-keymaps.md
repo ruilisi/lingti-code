@@ -52,6 +52,7 @@ Prefix is defined as `C-a` (`PRE` for short)
 | `PRE D` | Choose session to detach | Tmux |
 | `PRE >` | Show cheatsheet | Tmux |
 | `PRE <` | Show cheatsheet | Tmux |
+| `PRE T` | Move current window to index 1 | Tmux |
 
 ## Copy Mode
 
