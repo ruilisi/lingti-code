@@ -28,3 +28,4 @@ skills/
 ai-switch.*
 chat.*
 *.pid
+.omx
