@@ -11,10 +11,13 @@ INSTALL_STEPS = [
   { name: 'claude_code',   desc: 'Claude Code CLI' },
   { name: 'claude',        desc: 'Claude CLI config' },
   { name: 'qshell',        desc: 'Qshell (Qiniu Cloud CLI)' },
-  { name: 'fonts',         desc: 'Powerline fonts' },
+  { name: 'fonts',         desc: 'Terminal fonts (Nerd Font / Powerline fallback)' },
   { name: 'term_theme',    desc: 'iTerm2 theme',         platform: :macos },
   { name: 'bundle_config', desc: 'Bundler config' },
 ].freeze
+
+NERD_FONT_CASK = 'font-jetbrains-mono-nerd-font'
+NERD_FONT_FAMILY = 'JetBrainsMono Nerd Font'
 
 def run_step(name)
   case name
@@ -95,6 +98,11 @@ namespace :install do
   task :continue do
     run_install(from_beginning: false)
   end
+end
+
+desc 'Install terminal fonts for the shell prompt.'
+task :install_fonts do
+  install_fonts if want_to_install?('terminal fonts for the shell prompt')
 end
 
 task :link_files do
@@ -209,9 +217,20 @@ end
 
 def install_fonts
   puts '======================================================'
-  puts 'Installing patched fonts for Powerline/Lightline.'
+  puts 'Installing terminal fonts for the shell prompt.'
   puts '======================================================'
-  run %( cp -f $HOME/.lingti/fonts/* $HOME/Library/Fonts ) if macos?
+
+  if macos?
+    if command_exists?('brew')
+      puts "Installing #{NERD_FONT_FAMILY} via Homebrew cask."
+      run %( brew install --cask #{NERD_FONT_CASK} )
+      puts "Set your terminal font to '#{NERD_FONT_FAMILY}' or '#{NERD_FONT_FAMILY} Mono' after install."
+    else
+      puts 'Homebrew not found; falling back to bundled Powerline fonts.'
+      run %( cp -f $HOME/.lingti/fonts/* $HOME/Library/Fonts )
+    end
+  end
+
   run %( mkdir -p ~/.fonts && cp ~/.lingti/fonts/* ~/.fonts && fc-cache -vf ~/.fonts ) if linux?
   puts
 end

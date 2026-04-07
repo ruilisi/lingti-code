@@ -8,6 +8,8 @@
 curl -fsSL https://raw.githubusercontent.com/ruilisi/lingti-code/main/install.sh | bash
 ```
 
+On macOS, the installer now attempts to install `JetBrainsMono Nerd Font` via Homebrew so `agnoster` and other glyph-heavy prompts render correctly.
+
 <details>
 <summary><b>Docker</b></summary>
 
@@ -149,6 +151,7 @@ User overrides in `~/.tmux.conf.user`.
 ```bash
 rake -T                  # List all tasks
 rake install             # Full install
+rake install_fonts       # Terminal fonts for prompt glyphs
 rake install_prezto      # ZSH/Prezto only
 rake install_spacevim    # Neovim/SpaceVim only
 rake install_asdf        # Version manager only

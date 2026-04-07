@@ -22,7 +22,7 @@ for config_file ($HOME/.lingti/zsh/*.zsh) source $config_file
 # bun completions
 [ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
 # OpenClaw Completion
-source "/Users/alex/.openclaw/completions/openclaw.zsh"
+[ -f "$HOME/.openclaw/completions/openclaw.zsh" ] && source "$HOME/.openclaw/completions/openclaw.zsh"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
