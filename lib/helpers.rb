@@ -39,17 +39,30 @@ module Lingti
     def want_to_install?(section)
       if ENV['ASK'] == 'true'
         puts "Would you like to install configuration files for: #{section}? [y]es, [n]o"
-        STDIN.gets.chomp == 'y'
+        response = STDIN.gets
+        return false if response.nil?
+
+        response.chomp == 'y'
       else
         true
       end
     end
 
-    def ask(message, values)
+    def ask(message, values, default: nil)
       puts message
+      default = values.include?(default) ? default : values.first
+
+      unless STDIN.tty?
+        puts "Non-interactive input detected, defaulting to: #{default}"
+        return default
+      end
+
       while true
         values.each_with_index { |val, idx| puts " #{idx + 1}. #{val}" }
-        selection = STDIN.gets.chomp
+        input = STDIN.gets
+        return default if input.nil?
+
+        selection = input.chomp
         if (begin
           Float(selection).nil?
         rescue StandardError
