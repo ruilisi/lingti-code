@@ -123,11 +123,30 @@ ghpush <alias> <remote>     # push current branch to <remote> using <alias> key
 ghpush <alias> origin       # push to origin but force the <alias> SSH key
 ```
 
+**Remote resolution logic:**
+
+1. If `<remote>` is given explicitly, use it.
+2. Otherwise try a remote whose name matches `<alias>`.
+3. If no such remote exists, fall back to `origin`.
+
+This means `ghpush yolo` pushes to a remote called `yolo` (if it exists),
+**not** to `origin`. If you want to push a yolo-account repo that lives at
+`origin`, use:
+
+```zsh
+ghpush yolo origin
+```
+
 **Examples:**
 
 ```zsh
+# Repo has a remote named 'yolojasonhuang' pointing to yolojasonhuang/lsbot.git
+ghpush yolo yolojasonhuang  # push to yolojasonhuang/lsbot.git with yolo key
+
+# Repo's origin is already the yolo account's repo
+ghpush yolo origin          # push to origin with yolo key
+
 ghpush work                 # push to remote 'work' with work key
-ghpush work origin          # push to origin with work key
 ghpush main                 # push to remote 'main' with primary key
 ```
 
