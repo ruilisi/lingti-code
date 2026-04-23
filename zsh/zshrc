@@ -27,3 +27,6 @@ for config_file ($HOME/.lingti/zsh/*.zsh) source $config_file
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# opencode
+export PATH=/Users/alex/.opencode/bin:$PATH
