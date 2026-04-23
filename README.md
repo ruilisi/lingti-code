@@ -141,6 +141,7 @@ User overrides in `~/.tmux.conf.user`.
 | [docs/vim/manage_plugins.md](docs/vim/manage_plugins.md) | Plugin management |
 | [docs/vim/override.md](docs/vim/override.md) | Vim customization |
 | [docs/vim/lsp.md](docs/vim/lsp.md) | LSP setup, clients & keymaps |
+| [docs/bin-commands.md](docs/bin-commands.md) | CLI utilities in `bin/` |
 | [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) | Lingti product family |
 | [FAQ.md](FAQ.md) | FAQ |
 

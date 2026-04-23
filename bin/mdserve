@@ -1,0 +1,160 @@
+#!/usr/bin/env node
+// mdserve — markdown live preview server
+// Usage: mdserve [file.md] [port]
+//        mdserve                → serves all .md in current dir, port 6419
+//        mdserve README.md      → serves single file
+//        mdserve README.md 8080 → custom port
+
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// ── resolve args ──────────────────────────────────────────────
+const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
+let target = args[0] || '.';
+const port  = parseInt(args[1] || args.find(a => /^\d{4,5}$/.test(a)) || '6419');
+const HOST  = '0.0.0.0';
+
+target = path.resolve(target);
+const isDir  = fs.existsSync(target) && fs.statSync(target).isDirectory();
+const isFile = fs.existsSync(target) && !isDir;
+
+if (!isDir && !isFile) {
+  console.error(`mdserve: file or directory not found: ${target}`);
+  process.exit(1);
+}
+
+// ── ensure marked is available ────────────────────────────────
+const PKG_DIR = path.join(path.dirname(__dirname), 'node_modules');
+const MARKED_PKG = path.join(PKG_DIR, 'marked', 'package.json');
+
+if (!fs.existsSync(MARKED_PKG)) {
+  console.log('Installing marked...');
+  execSync(`npm install --prefix ${path.dirname(__dirname)} marked --silent`, { stdio: 'inherit' });
+}
+
+const markedPkg = JSON.parse(fs.readFileSync(path.join(PKG_DIR, 'marked', 'package.json'), 'utf8'));
+const markedEntry = path.join(PKG_DIR, 'marked', markedPkg.exports?.['.']?.default ?? markedPkg.main);
+const { marked } = await import(markedEntry);
+
+// ── SSE clients ───────────────────────────────────────────────
+const clients = new Set();
+
+function broadcast() {
+  for (const res of clients) {
+    res.write('data: reload\n\n');
+  }
+}
+
+// ── watch ─────────────────────────────────────────────────────
+if (isFile) {
+  fs.watch(target, () => broadcast());
+} else {
+  fs.watch(target, { recursive: true }, (_, name) => {
+    if (name && name.endsWith('.md')) broadcast();
+  });
+}
+
+// ── HTML shell ────────────────────────────────────────────────
+function shell(title, body) {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>
+  body { max-width: 860px; margin: 40px auto; padding: 0 24px;
+         font-family: -apple-system, "Noto Sans SC", sans-serif;
+         font-size: 15px; line-height: 1.8; color: #1a1a1a; }
+  h1,h2,h3 { border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  pre  { background: #f4f4f4; padding: 16px; border-radius: 6px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; }
+  th { background: #f8f8f8; }
+  blockquote { border-left: 4px solid #ccc; margin: 0; padding-left: 16px; color: #555; }
+  a { color: #0969da; }
+  #_status { position: fixed; bottom: 12px; right: 16px; font-size: 11px;
+             color: #aaa; font-family: monospace; }
+</style>
+</head>
+<body>
+${body}
+<div id="_status">live</div>
+<script>
+  const es = new EventSource('/_sse');
+  es.onmessage = () => location.reload();
+  es.onerror   = () => { document.getElementById('_status').textContent = 'disconnected'; };
+</script>
+</body>
+</html>`;
+}
+
+function renderMd(filePath) {
+  const src = fs.readFileSync(filePath, 'utf8');
+  return marked.parse(src);
+}
+
+function listDir(dir) {
+  const files = fs.readdirSync(dir)
+    .filter(f => f.endsWith('.md'))
+    .sort();
+  if (!files.length) return shell('mdserve', '<p>No .md files found.</p>');
+  const links = files.map(f =>
+    `<li><a href="/${encodeURIComponent(f)}">${f}</a></li>`
+  ).join('\n');
+  return shell('mdserve', `<h1>Markdown Files</h1><ul>${links}</ul>`);
+}
+
+// ── server ────────────────────────────────────────────────────
+const server = http.createServer((req, res) => {
+  const url = decodeURIComponent(req.url || '/');
+
+  // SSE endpoint
+  if (url === '/_sse') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+    res.write(':\n\n'); // comment to establish connection
+    clients.add(res);
+    req.on('close', () => clients.delete(res));
+    return;
+  }
+
+  // Single file mode
+  if (isFile) {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(shell(path.basename(target), renderMd(target)));
+    return;
+  }
+
+  // Directory mode: index
+  if (url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(listDir(target));
+    return;
+  }
+
+  // Directory mode: specific file
+  const file = path.join(target, url.replace(/^\//, ''));
+  if (!file.startsWith(target) || !file.endsWith('.md') || !fs.existsSync(file)) {
+    res.writeHead(404); res.end('Not found'); return;
+  }
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(shell(path.basename(file), renderMd(file)));
+});
+
+server.listen(port, HOST, () => {
+  const label = isFile ? path.basename(target) : target;
+  console.log(`mdserve  ${label}`);
+  console.log(`http://localhost:${port}  (0.0.0.0:${port})`);
+  console.log('Ctrl-C to stop');
+});
