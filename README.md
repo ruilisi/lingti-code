@@ -1,5 +1,11 @@
 <p align="center"><b>lingti-code</b> — AI-ready development environment built on Tmux + Neovim + Zsh.<br>One-line install on <b>macOS</b>, <b>Ubuntu</b>, and <b>Docker</b>.</p>
 
+<p align="center"><sub>Trusted By：中国人民大学 智慧治理学院</sub></p>
+
+---
+
+灵缇代码（lingti-code）是由「杰客」（[hophacker](https://github.com/hophacker)）自 2017 年 3 月 8 日开始持续维护、并于 2026 年 1 月 29 日正式开源的开发者工具集。正如灵缇犬一样，lingti-code 主打**敏捷、省时、省力与 AI Native**——以 Tmux + Neovim（SpaceVim）+ Zsh（oh-my-zsh）为核心三件套，集成数万个快捷命令，一行 `curl` 命令即可在 macOS、Ubuntu 或 Docker 容器中完成全量安装。在新一波 AI 浪潮中，lingti-code 持续追踪并集成最新的优秀工具与使用方式，与时俱进。
+
 ---
 
 ## Install
@@ -41,7 +47,7 @@ cd ~/.lingti && git pull --rebase && rake update
 
 | Category | Details |
 |----------|---------|
-| **Shell** | ZSH + [Prezto](https://github.com/sorin-ionescu/prezto), 100+ aliases, [fasd](https://github.com/clvv/fasd) navigation, custom prompts |
+| **Shell** | ZSH + [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh), 100+ aliases, [fasd](https://github.com/clvv/fasd) navigation, custom prompts |
 | **Editor** | Neovim + [SpaceVim](https://spacevim.org/), LSP, snippets, ALE linting, [Copilot](https://github.com/features/copilot) |
 | **Multiplexer** | Tmux with vim keybindings, `Ctrl-a` prefix, vim-tmux-navigator |
 | **Git** | Sensible defaults, extensive aliases (`ga`, `gc`, `gd`, `gfr`…), commitlint |
@@ -56,7 +62,7 @@ cd ~/.lingti && git pull --rebase && rake update
 ~/.lingti/
 ├── Rakefile              # Installation orchestrator
 ├── lib/tasks/            # Modular rake tasks
-├── zsh/                  # ZSH config + prezto submodule
+├── zsh/                  # ZSH config (oh-my-zsh + custom files)
 ├── SpaceVim.d/           # Neovim config (init.toml, autoload/, snippets/)
 ├── git/                  # Git config
 ├── tmux/                 # Tmux config
@@ -153,7 +159,7 @@ User overrides in `~/.tmux.conf.user`.
 rake -T                  # List all tasks
 rake install             # Full install
 rake install_fonts       # Terminal fonts for prompt glyphs
-rake install_prezto      # ZSH/Prezto only
+rake install_ohmyzsh     # ZSH/oh-my-zsh only
 rake install_spacevim    # Neovim/SpaceVim only
 rake install_asdf        # Version manager only
 rake install_claude      # Claude Code config only

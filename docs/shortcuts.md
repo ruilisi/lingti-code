@@ -229,5 +229,5 @@ cp `f mov` .
 |----------|-------------|
 | Files | `~/.lingti/zsh/files.zsh` |
 | Functions | `~/.lingti/zsh/function.zsh` |
-| Git | `~/.zprezto/modules/git/alias.zsh` |
-| fasd | `~/.zprezto/modules/fasd/init.zsh` |
+| Git | `~/.oh-my-zsh/plugins/git/git.plugin.zsh` |
+| fasd | `~/.oh-my-zsh/plugins/fasd/fasd.plugin.zsh` |
