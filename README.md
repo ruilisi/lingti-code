@@ -163,6 +163,7 @@ rake install_ohmyzsh     # ZSH/oh-my-zsh only
 rake install_spacevim    # Neovim/SpaceVim only
 rake install_asdf        # Version manager only
 rake install_claude      # Claude Code config only
+rake install_gemini      # Gemini CLI only
 
 ASK=true rake install    # Interactive mode
 DEBUG=true rake install  # Dry run
