@@ -8,7 +8,6 @@ INSTALL_STEPS = [
   { name: 'ohmyzsh',       desc: 'ZSH/oh-my-zsh setup' },
   { name: 'spacevim',      desc: 'SpaceVim setup' },
   { name: 'asdf',          desc: 'ASDF version manager' },
-  { name: 'claude_code',   desc: 'Claude Code CLI' },
   { name: 'claude',        desc: 'Claude CLI config' },
   { name: 'gemini',        desc: 'Gemini CLI' },
   { name: 'qshell',        desc: 'Qshell (Qiniu Cloud CLI)' },
@@ -38,7 +37,6 @@ def run_step(name)
   when 'ohmyzsh'       then Rake::Task['install_ohmyzsh'].execute
   when 'spacevim'      then Rake::Task['install_spacevim'].execute
   when 'asdf'          then Rake::Task['install_asdf'].execute
-  when 'claude_code'   then Rake::Task['install_claude_code'].execute
   when 'claude'        then Rake::Task['install_claude'].execute
   when 'gemini'        then Rake::Task['install_gemini'].execute
   when 'qshell'        then Rake::Task['install_qshell'].execute
