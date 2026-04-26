@@ -8,7 +8,7 @@ Make sure you follow the naming convention of `prompt_[name]_setup`
 touch ~/.zsh.prompts/prompt_mytheme_setup
 ```
 
-See also the [Prezto](https://github.com/sorin-ionescu/prezto) project for more info on themes.
+See also the [oh-my-zsh themes](https://github.com/ohmyzsh/ohmyzsh/wiki/Themes) for more info on themes.
 
 ### Customizing ZSH with ~/.zsh.after/ and ~/.zsh.before/
 

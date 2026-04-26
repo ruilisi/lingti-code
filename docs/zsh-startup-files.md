@@ -2,9 +2,9 @@
 
 This document explains which zsh configuration files are loaded and in what order.
 
-## Prezto Runcoms
+## ZSH Config Files
 
-The files in `zsh/prezto/runcoms/` are symlinked to `~/` with a `.` prefix during installation.
+The files in `zsh/` are symlinked to `~/` with a `.` prefix during installation.
 
 | File | Symlinked To |
 |------|--------------|
@@ -13,7 +13,6 @@ The files in `zsh/prezto/runcoms/` are symlinked to `~/` with a `.` prefix durin
 | `zshrc` | `~/.zshrc` |
 | `zlogin` | `~/.zlogin` |
 | `zlogout` | `~/.zlogout` |
-| `zpreztorc` | `~/.zpreztorc` |
 
 ## Load Order by Shell Type
 
@@ -56,17 +55,9 @@ zlogout
 | `zshrc` | Interactive shell config. Aliases, functions, prompt, completions. |
 | `zlogin` | Runs after `zshrc` for login shells. Rarely needed. |
 | `zlogout` | Cleanup on logout. Rarely needed. |
-| `zpreztorc` | Prezto-specific configuration. Modules, themes, options. |
+## Per-Machine Customization
 
-## Overriding Prezto Defaults
-
-Custom overrides go in `zsh/prezto-override/`. These are symlinked after the base runcoms, replacing them:
-
-```
-zsh/prezto-override/zpreztorc  → ~/.zpreztorc
-zsh/prezto-override/zshrc      → ~/.zshrc
-zsh/prezto-override/zprofile   → ~/.zprofile  (if exists)
-```
+Drop files into these directories (not tracked in the repo) to override settings locally:
 
 ## User Customization Directories
 
