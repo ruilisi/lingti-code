@@ -162,6 +162,7 @@ rake install_fonts       # Terminal fonts for prompt glyphs
 rake install_ohmyzsh     # ZSH/oh-my-zsh only
 rake install_spacevim    # Neovim/SpaceVim only
 rake install_asdf        # Version manager only
+rake install_claude_code # Claude Code CLI (optional, large download)
 rake install_claude      # Claude Code config only
 rake install_gemini      # Gemini CLI only
 
