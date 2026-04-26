@@ -20,6 +20,11 @@ install_pkg() {
   if ! command_exists "$cmd"; then
     info "Installing $pkg..."
     if [ "$(uname)" = "Darwin" ]; then
+      if ! command_exists brew; then
+        echo "Homebrew is required but not installed. Install it first:"
+        echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+        exit 1
+      fi
       brew install "$pkg"
     else
       sudo apt install -y "$pkg"
@@ -29,9 +34,12 @@ install_pkg() {
 
 # --- Main ---
 
-if [ -d "$INSTALL_DIR" ]; then
+if [ -d "$INSTALL_DIR" ] && [ -f "$INSTALL_DIR/Rakefile" ]; then
   echo "Lingti is already installed at $INSTALL_DIR"
   exit 0
+elif [ -d "$INSTALL_DIR" ]; then
+  echo "Found empty or incomplete $INSTALL_DIR, removing and reinstalling..."
+  rm -rf "$INSTALL_DIR"
 fi
 
 info "Installing dependencies..."
