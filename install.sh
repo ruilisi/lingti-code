@@ -44,9 +44,14 @@ fi
 
 info "Installing dependencies..."
 install_pkg fontconfig fc-cache
-for tool in zsh git rake tmux; do
+for tool in zsh git tmux; do
   install_pkg "$tool"
 done
+
+if ! command_exists rake; then
+  info "Installing rake..."
+  gem install rake --no-document
+fi
 
 info "Cloning lingti-code..."
 git clone --depth=1 "$REPO" "$INSTALL_DIR"
