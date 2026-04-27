@@ -1,0 +1,46 @@
+#!/usr/bin/env zsh
+# yt-share - Download YouTube video and convert to a format compatible with social/chat apps
+# Usage: yt-share <YouTube-URL> [output-dir]
+
+set -e
+
+URL="$1"
+OUTDIR="${2:-$HOME/Downloads}"
+
+if [[ -z "$URL" ]]; then
+  echo "Usage: $0 <YouTube-URL> [output-dir]"
+  exit 1
+fi
+
+TMP_DIR=$(mktemp -d)
+trap "rm -rf '$TMP_DIR'" EXIT
+
+echo ">> Downloading: $URL"
+yt-dlp \
+  --output "$TMP_DIR/%(title)s.%(ext)s" \
+  --format "bestvideo+bestaudio/best" \
+  "$URL"
+
+INPUT=$(ls "$TMP_DIR"/*)
+
+BASENAME=$(basename "$INPUT")
+TITLE="${BASENAME%.*}"
+SAFE_TITLE=$(echo "$TITLE" | tr '/:*?"<>|\\' '_')
+OUTPUT="$OUTDIR/${SAFE_TITLE}_share.mp4"
+
+echo ">> Converting to social-compatible format..."
+ffmpeg -i "$INPUT" \
+  -vcodec libx264 \
+  -profile:v baseline \
+  -level 3.1 \
+  -preset fast \
+  -crf 23 \
+  -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" \
+  -acodec aac \
+  -b:a 128k \
+  -ar 44100 \
+  -movflags +faststart \
+  -y \
+  "$OUTPUT"
+
+echo ">> Done: $OUTPUT"
