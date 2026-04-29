@@ -141,6 +141,7 @@ User overrides in `~/.tmux.conf.user`.
 |----------|-------------|
 | [docs/ALIASES.md](docs/ALIASES.md) | Shell aliases reference |
 | [docs/vim-keymaps.md](docs/vim-keymaps.md) | Keyboard shortcuts (Zsh, Tmux, Vim) |
+| [docs/tmux-keymaps.md](docs/tmux-keymaps.md) | Tmux keybindings reference |
 | [docs/vim/loading.md](docs/vim/loading.md) | How nvim loads |
 | [docs/vim/coding.md](docs/vim/coding.md) | Coding features |
 | [docs/vim/navigation.md](docs/vim/navigation.md) | Navigation shortcuts |

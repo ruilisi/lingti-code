@@ -1,66 +1,111 @@
 # Tmux Keymaps
 
-Prefix is defined as `C-a` (`PRE` for short)
+Prefix key is `C-a` (Ctrl+A) — written as `PRE` below.
+
+Press `PRE C-a` to send a literal `C-a` to the terminal.
+
+---
+
+## Session Management
+
+| Keymap | Action |
+|--------|--------|
+| `PRE C-c` | Create new session |
+| `PRE C-f` | Find/switch session by name |
+| `PRE BTab` | Switch to last (previously used) session |
+
+## Configuration
+
+| Keymap | Action |
+|--------|--------|
+| `PRE e` | Open local config (`~/.tmux.conf.local`) in new window |
+| `PRE r` | Reload tmux config |
+
+---
 
 ## Pane Management
 
-### Pane Navigation
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `C-h` | Move to left pane | Tmux |
-| `C-j` | Move to pane below | Tmux |
-| `C-k` | Move to pane above | Tmux |
-| `C-l` | Move to right pane | Tmux |
-| `PRE o` | Go to next pane (cycle) | Tmux |
-| `PRE ;` | Go to last (previously used) pane | Tmux |
-| `PRE 1-9` | Jump to pane 1-9 | Tmux |
+### Splitting
 
-### Pane Creation & Splitting
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE c` | Create a new pane | Tmux |
-| `PRE s` | Split panes horizontally (up/down) | Tmux |
-| `PRE v` | Split panes vertically (left/right) | Tmux |
+| Keymap | Action |
+|--------|--------|
+| `PRE -` | Split vertically (top / bottom) |
+| `PRE _` | Split horizontally (left / right) |
 
-### Pane Actions
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE x` | Kill pane | Tmux |
-| `PRE z` | Zoom/Unzoom pane | Tmux |
-| `PRE !` | Move current pane to new window | Tmux |
-| `PRE {` | Move pane to previous position | Tmux |
-| `PRE }` | Move pane to next position | Tmux |
-| `PRE C-o` | Rotate window up (move all panes) | Tmux |
-| `PRE M-o` | Rotate window down | Tmux |
-| `PRE m` | Mark pane | Tmux |
+### Navigation (vim-style, repeatable)
 
-### Pane Resize
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE h` | Resize pane left | Tmux |
-| `PRE j` | Resize pane down | Tmux |
-| `PRE k` | Resize pane up | Tmux |
-| `PRE l` | Resize pane right | Tmux |
+| Keymap | Action |
+|--------|--------|
+| `PRE h` | Move to left pane |
+| `PRE j` | Move to pane below |
+| `PRE k` | Move to pane above |
+| `PRE l` | Move to right pane |
+
+> **Note:** vim-tmux-navigator also enables `C-h / C-j / C-k / C-l` (no prefix) to navigate seamlessly between Vim splits and tmux panes.
+
+### Resize (repeatable)
+
+| Keymap | Action |
+|--------|--------|
+| `PRE H` | Resize pane left (2 cells) |
+| `PRE J` | Resize pane down (2 cells) |
+| `PRE K` | Resize pane up (2 cells) |
+| `PRE L` | Resize pane right (2 cells) |
+
+### Swap & Maximize
+
+| Keymap | Action |
+|--------|--------|
+| `PRE >` | Swap current pane with next |
+| `PRE <` | Swap current pane with previous |
+| `PRE +` | Maximize / restore current pane |
+
+### Other Pane Actions
+
+| Keymap | Action |
+|--------|--------|
+| `PRE m` | Toggle mouse on / off |
+| `PRE F` | Launch Facebook PathPicker (`fpp`) on pane content |
+
+---
 
 ## Window Management
 
-### Window Actions
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `PRE ,` | Rename window | Tmux |
-| `PRE d` | Detach from session | Tmux |
-| `PRE D` | Choose session to detach | Tmux |
-| `PRE >` | Show cheatsheet | Tmux |
-| `PRE <` | Show cheatsheet | Tmux |
-| `PRE T` | Move current window to index 1 | Tmux |
+| Keymap | Action |
+|--------|--------|
+| `PRE Tab` | Switch to last active window |
+
+---
 
 ## Copy Mode
 
-Press `PRE [` to enter Scroll/Copy Mode
+Enter copy mode with `PRE Enter` (vi-style).
 
-### Copy Mode Operations
-| Keymap | Action | Mode |
-|--------|--------|------|
-| `Shift-V` | Select text (visual line) | Copy Mode |
-| `Enter` | Copy selected text | Copy Mode |
-| `]` | Paste text copied from scroll mode | Normal |
+### Vi Copy Mode Bindings
+
+| Keymap | Action |
+|--------|--------|
+| `v` | Begin selection |
+| `C-v` | Toggle rectangle selection |
+| `y` | Copy selection and exit copy mode |
+| `H` | Jump to start of line |
+| `L` | Jump to end of line |
+| `Escape` | Cancel / exit copy mode |
+
+---
+
+## Buffer & Clipboard
+
+| Keymap | Action |
+|--------|--------|
+| `PRE b` | List paste buffers |
+| `PRE p` | Paste from top paste buffer |
+| `PRE P` | Choose paste buffer interactively |
+
+---
+
+## Misc
+
+| Keymap | Action |
+|--------|--------|
+| `C-l` | Clear screen and scroll history (no prefix needed) |
