@@ -89,10 +89,13 @@ ghuse() {
   git config --global user.email "$email"
 
   # Update ~/.gitconfig.user — url rewrite + user identity
+  # Rewrite both https:// and git@github.com: URLs to the active host alias,
+  # so existing repo remotes don't need to be updated when switching accounts.
   local gitconfig_user="$HOME/.gitconfig.user"
   {
     echo "[url \"git@${host}:\"]"
     echo "    insteadOf = https://github.com/"
+    echo "    insteadOf = git@github.com:"
     echo "[user]"
     echo "    name = $name"
     echo "    email = $email"
