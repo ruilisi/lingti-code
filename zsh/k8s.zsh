@@ -85,8 +85,8 @@ function getpod {
 
 function kexec {
   getpod $@ || return 1
-  echo "kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c $LEFT_ARGS"
-  kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c $LEFT_ARGS
+  echo "kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c \"$LEFT_ARGS\""
+  kubectl -it -n $NAMESPACE exec $RUNNING_POD -- /bin/sh -c "$LEFT_ARGS"
 }
 
 function kcp {
