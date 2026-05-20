@@ -14,23 +14,28 @@ md2pdf() {
     --embed-resources \
     --mathjax \
     -H <(cat <<'CSS'
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  body { font-family: "Heiti SC", "PingFang SC", sans-serif; font-size: 14px; line-height: 1.6; max-width: 860px; margin: 40px auto; padding: 0 40px; color: #222; }
-  h1,h2,h3,h4 { color: #111; margin-top: 1.4em; }
+  body { font-family: "Noto Sans SC", "PingFang SC", "Heiti SC", "Microsoft YaHei", "Helvetica Neue", sans-serif; font-size: 14px; line-height: 1.6; max-width: 860px; margin: 40px auto; padding: 0 40px; color: #222; }
+  h1,h2,h3,h4 { font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif; color: #111; margin-top: 1.4em; }
   table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: 13px; }
   th { background: #f0f0f0; font-weight: bold; }
   th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
   tr:nth-child(even) { background: #fafafa; }
-  code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
-  pre { background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; }
+  code { font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; background: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+  pre { font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; }
   blockquote { border-left: 4px solid #ccc; margin: 0; padding-left: 1em; color: #555; }
 </style>
 CSS
 ) && \
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-    --headless --disable-gpu --no-sandbox \
+    --headless=new --disable-gpu --no-sandbox \
+    --no-pdf-header-footer \
+    --run-all-compositor-stages-before-draw \
+    --virtual-time-budget=20000 \
     --print-to-pdf="$output" \
-    --print-to-pdf-no-header \
     "file://$tmphtml" 2>/dev/null
 
   rm -f "$tmphtml"
