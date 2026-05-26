@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+# html2pdf — Convert an HTML file to PDF via headless Chrome
+#
+# Usage:
+#   html2pdf <input.html> [output.pdf]
+#   html2pdf <input.html> -o <output.pdf>
+#   html2pdf <input.html> --budget 20000
+#   html2pdf <input.html> --no-verify --open
+#
+# Options:
+#   -o, --output    Output file path (default: same dir/name as input, .pdf)
+#   --budget        Virtual time budget in ms (default: 15000)
+#   --paper         Paper size: letter | a4 | a3 (default: letter)
+#   --landscape     Use landscape orientation
+#   --header-footer Keep Chrome's default header/footer (default: off)
+#   --no-verify     Skip Chinese-rendering verification
+#   --open          Open the PDF after generation
+#   -h, --help      Show this help
+#
+# Verification:
+#   After generation, runs `pdftotext` on page 1 and checks for non-ASCII
+#   (CJK) characters — catches the "中文渲染成方块" failure mode where the
+#   PDF looks fine on screen but is actually blank in the produced file.
+#   Requires `pdftotext` (brew install poppler) for verification.
+
+set -euo pipefail
+
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+usage() { sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
+die()   { echo "html2pdf: error: $*" >&2; exit 1; }
+
+[[ -x "$CHROME" ]] || die "Chrome not found at: $CHROME"
+
+# ── Argument parsing ──────────────────────────────────────
+INPUT=""
+OUTPUT=""
+BUDGET=15000
+PAPER="letter"
+LANDSCAPE=0
+HEADER_FOOTER=0
+VERIFY=1
+OPEN_AFTER=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)        usage ;;
+    -o|--output)      OUTPUT="$2";   shift 2 ;;
+    --budget)         BUDGET="$2";   shift 2 ;;
+    --paper)          PAPER="$2";    shift 2 ;;
+    --landscape)      LANDSCAPE=1;   shift ;;
+    --header-footer)  HEADER_FOOTER=1; shift ;;
+    --no-verify)      VERIFY=0;      shift ;;
+    --open)           OPEN_AFTER=1;  shift ;;
+    -*)               die "unknown option: $1" ;;
+    *)
+      if   [[ -z "$INPUT"  ]]; then INPUT="$1"
+      elif [[ -z "$OUTPUT" ]]; then OUTPUT="$1"
+      else die "unexpected argument: $1"
+      fi
+      shift ;;
+  esac
+done
+
+[[ -n "$INPUT" ]] || usage
+[[ -f "$INPUT" ]] || die "input file not found: $INPUT"
+
+# Resolve to absolute path (Chrome requires file:// + abs path)
+INPUT_ABS="$(cd "$(dirname "$INPUT")" && pwd)/$(basename "$INPUT")"
+
+if [[ -z "$OUTPUT" ]]; then
+  OUTPUT="${INPUT_ABS%.*}.pdf"
+fi
+# Normalize output to absolute
+OUTPUT_DIR="$(cd "$(dirname "$OUTPUT")" && pwd)"
+OUTPUT="$OUTPUT_DIR/$(basename "$OUTPUT")"
+
+# Paper size flags
+PAPER_FLAGS=()
+case "$PAPER" in
+  letter) ;;  # default
+  a4)     PAPER_FLAGS+=(--paper-width=8.27 --paper-height=11.69) ;;
+  a3)     PAPER_FLAGS+=(--paper-width=11.69 --paper-height=16.54) ;;
+  *)      die "unknown paper size: $PAPER (use letter|a4|a3)" ;;
+esac
+
+EXTRA_FLAGS=()
+[[ "$HEADER_FOOTER" == 0 ]] && EXTRA_FLAGS+=(--no-pdf-header-footer)
+[[ "$LANDSCAPE"    == 1 ]] && EXTRA_FLAGS+=(--landscape)
+
+echo "html2pdf: converting $INPUT → $OUTPUT"
+echo "          budget=${BUDGET}ms paper=$PAPER landscape=$LANDSCAPE"
+
+"$CHROME" \
+  --headless=new \
+  ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} \
+  ${PAPER_FLAGS[@]+"${PAPER_FLAGS[@]}"} \
+  --print-to-pdf="$OUTPUT" \
+  --disable-gpu \
+  --run-all-compositor-stages-before-draw \
+  --virtual-time-budget="$BUDGET" \
+  "file://$INPUT_ABS" 2>/dev/null
+
+[[ -f "$OUTPUT" ]] || die "PDF not produced"
+SIZE=$(stat -f%z "$OUTPUT" 2>/dev/null || stat -c%s "$OUTPUT")
+echo "html2pdf: wrote $(printf "%'d" "$SIZE") bytes"
+
+# ── Verification ─────────────────────────────────────────
+if [[ "$VERIFY" == 1 ]]; then
+  if ! command -v pdftotext >/dev/null 2>&1; then
+    echo "html2pdf: warn: pdftotext not found — skipping verification"
+    echo "          install with: brew install poppler"
+  else
+    # Only verify if input HTML actually contains non-ASCII (CJK) bytes
+    if LC_ALL=C tr -d '\000-\177' < "$INPUT" | LC_ALL=C grep -q . ; then
+      TEXT="$(pdftotext -layout -f 1 -l 1 "$OUTPUT" - 2>/dev/null || true)"
+      if printf '%s' "$TEXT" | LC_ALL=C tr -d '\000-\177' | LC_ALL=C grep -q . ; then
+        echo "html2pdf: ✓ CJK characters rendered correctly"
+      else
+        echo "html2pdf: ✗ WARNING — input has CJK but PDF page 1 contains no CJK chars" >&2
+        echo "          likely cause: HTML missing Noto Sans SC webfont, or --budget too short" >&2
+        echo "          fix: add to <head>:" >&2
+        echo '          <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">' >&2
+        echo '          and put "Noto Sans SC" first in font-family' >&2
+        exit 2
+      fi
+    fi
+  fi
+fi
+
+[[ "$OPEN_AFTER" == 1 ]] && open "$OUTPUT"
+exit 0
