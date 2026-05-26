@@ -29,3 +29,7 @@ ai-switch.*
 chat.*
 *.pid
 .omx
+chrome-profiles/
+stellar.db
+*.sqlite
+*.sqlite3

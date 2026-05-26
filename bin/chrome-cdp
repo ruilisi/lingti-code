@@ -1,0 +1,215 @@
+#!/usr/bin/env node
+// chrome-cdp — talk to a running chrome-mcp Chrome over CDP HTTP endpoints
+// Usage:
+//   chrome-cdp ps                       # scan 9222-9229, show live debugger ports
+//   chrome-cdp tabs [port]              # list pages on a port
+//   chrome-cdp open  <url> [port]       # open a new tab
+//   chrome-cdp activate <id> [port]     # focus a tab
+//   chrome-cdp close <id> [port]        # close a tab
+//   chrome-cdp version [port]           # print /json/version
+//   chrome-cdp eval <id> <js> [port]    # Runtime.evaluate in a tab
+//
+// Default port: 9222. Trailing numeric arg is treated as port.
+
+import { execSync } from 'child_process';
+
+const DEFAULT_PORT = 9222;
+const SCAN_PORTS = [9222, 9223, 9224, 9225, 9226, 9227, 9228, 9229];
+
+async function getJSON(url, ms = 1500) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(ms) });
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText} — ${url}`);
+  const txt = await r.text();
+  try {
+    return JSON.parse(txt);
+  } catch {
+    return txt;
+  }
+}
+
+function profileFromPort(port) {
+  try {
+    const out = execSync(
+      `ps -axo command | grep -E "remote-debugging-port=${port}( |$)" | grep -v grep | head -1`,
+      { encoding: 'utf8' },
+    );
+    const m = out.match(/--user-data-dir=([^\s]+(?:\\ [^\s]+)*)/);
+    if (!m) return null;
+    const parts = m[1].split('/');
+    const i = parts.indexOf('chrome-profiles');
+    return i >= 0 ? parts[i + 1] : m[1];
+  } catch {
+    return null;
+  }
+}
+
+function pickPort(args) {
+  const last = args[args.length - 1];
+  if (last && /^\d{2,5}$/.test(last)) {
+    return { args: args.slice(0, -1), port: parseInt(last, 10) };
+  }
+  return { args, port: DEFAULT_PORT };
+}
+
+// ── commands ─────────────────────────────────────────────────────
+
+async function ps() {
+  const rows = [];
+  await Promise.all(
+    SCAN_PORTS.map(async (p) => {
+      try {
+        const v = await getJSON(`http://127.0.0.1:${p}/json/version`, 400);
+        const tabs = await getJSON(`http://127.0.0.1:${p}/json`, 400);
+        rows.push({
+          port: p,
+          browser: v.Browser,
+          profile: profileFromPort(p),
+          tabs: Array.isArray(tabs) ? tabs.filter((t) => t.type === 'page').length : 0,
+        });
+      } catch {}
+    }),
+  );
+  if (!rows.length) {
+    console.log('(no live chrome debugger ports in 9222–9229)');
+    return;
+  }
+  rows.sort((a, b) => a.port - b.port);
+  for (const r of rows) {
+    console.log(
+      `${r.port}  ${(r.profile ?? '(unknown)').padEnd(20)}  ${String(r.tabs).padStart(3)} tabs  ${r.browser}`,
+    );
+  }
+}
+
+async function tabs(port) {
+  const list = await getJSON(`http://127.0.0.1:${port}/json`);
+  const pages = list.filter((t) => t.type === 'page');
+  pages.forEach((t, i) => {
+    const idx = String(i + 1).padStart(2, ' ');
+    console.log(`${idx}  ${t.id}  ${t.url}`);
+    if (t.title) console.log(`     ${' '.repeat(t.id.length)}  ${t.title}`);
+  });
+  if (!pages.length) console.log('(no pages)');
+}
+
+async function open(url, port) {
+  const r = await getJSON(`http://127.0.0.1:${port}/json/new?${encodeURIComponent(url)}`);
+  console.log(r.id, r.url);
+}
+
+async function activate(id, port) {
+  console.log(await getJSON(`http://127.0.0.1:${port}/json/activate/${id}`));
+}
+
+async function close(id, port) {
+  console.log(await getJSON(`http://127.0.0.1:${port}/json/close/${id}`));
+}
+
+async function version(port) {
+  console.log(JSON.stringify(await getJSON(`http://127.0.0.1:${port}/json/version`), null, 2));
+}
+
+async function evalInTab(id, expression, port) {
+  if (typeof WebSocket === 'undefined') {
+    throw new Error('eval requires Node 22+ (built-in WebSocket). Upgrade Node or skip this subcommand.');
+  }
+  const list = await getJSON(`http://127.0.0.1:${port}/json`);
+  const tab = list.find((t) => t.id === id);
+  if (!tab?.webSocketDebuggerUrl) throw new Error(`tab not found: ${id}`);
+  const ws = new WebSocket(tab.webSocketDebuggerUrl);
+  await new Promise((res, rej) => {
+    ws.addEventListener('open', res, { once: true });
+    ws.addEventListener('error', rej, { once: true });
+  });
+  const reqId = 1;
+  const result = await new Promise((res, rej) => {
+    ws.addEventListener('message', (ev) => {
+      const msg = JSON.parse(ev.data);
+      if (msg.id === reqId) res(msg);
+    });
+    ws.addEventListener('error', rej);
+    ws.send(
+      JSON.stringify({
+        id: reqId,
+        method: 'Runtime.evaluate',
+        params: { expression, returnByValue: true, awaitPromise: true },
+      }),
+    );
+  });
+  ws.close();
+  if (result.error) throw new Error(result.error.message);
+  if (result.result?.exceptionDetails) {
+    throw new Error(
+      result.result.exceptionDetails.text +
+        ': ' +
+        result.result.exceptionDetails.exception?.description,
+    );
+  }
+  const v = result.result?.result?.value;
+  console.log(typeof v === 'string' ? v : JSON.stringify(v, null, 2));
+}
+
+// ── dispatch ─────────────────────────────────────────────────────
+
+const [cmd, ...rest] = process.argv.slice(2);
+
+function usage() {
+  console.error([
+    'Usage:',
+    '  chrome-cdp ps',
+    '  chrome-cdp tabs [port]',
+    '  chrome-cdp open <url> [port]',
+    '  chrome-cdp activate <id> [port]',
+    '  chrome-cdp close <id> [port]',
+    '  chrome-cdp version [port]',
+    '  chrome-cdp eval <id> <js> [port]',
+  ].join('\n'));
+}
+
+try {
+  switch (cmd) {
+    case 'ps':
+      await ps();
+      break;
+    case 'tabs': {
+      const { port } = pickPort(rest);
+      await tabs(port);
+      break;
+    }
+    case 'open': {
+      const { args, port } = pickPort(rest);
+      if (!args[0]) throw new Error('open <url> [port]');
+      await open(args[0], port);
+      break;
+    }
+    case 'activate': {
+      const { args, port } = pickPort(rest);
+      if (!args[0]) throw new Error('activate <id> [port]');
+      await activate(args[0], port);
+      break;
+    }
+    case 'close': {
+      const { args, port } = pickPort(rest);
+      if (!args[0]) throw new Error('close <id> [port]');
+      await close(args[0], port);
+      break;
+    }
+    case 'version': {
+      const { port } = pickPort(rest);
+      await version(port);
+      break;
+    }
+    case 'eval': {
+      const { args, port } = pickPort(rest);
+      if (!args[0] || !args[1]) throw new Error('eval <id> <js> [port]');
+      await evalInTab(args[0], args.slice(1).join(' '), port);
+      break;
+    }
+    default:
+      usage();
+      process.exit(1);
+  }
+} catch (e) {
+  console.error('error:', e.message || e);
+  process.exit(1);
+}

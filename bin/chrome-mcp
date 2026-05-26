@@ -1,0 +1,107 @@
+#!/usr/bin/env node
+// chrome-mcp — launch Chrome with a named profile + remote debugging
+// Usage:
+//   chrome-mcp <profile>          # picks first free port starting at 9222
+//   chrome-mcp --list             # list known profiles
+//
+// Each profile lives in ~/.lingti/chrome-profiles/<name> — fully isolated
+// cookies / logins / extensions. First launch is a fresh Chrome; sign in,
+// close, and the credentials persist for next time.
+
+import { spawn } from 'child_process';
+import fs from 'fs';
+import net from 'net';
+import os from 'os';
+import path from 'path';
+
+const HOME = os.homedir();
+const PROFILES_DIR = path.join(HOME, '.lingti', 'chrome-profiles');
+
+const CHROME_PATHS = {
+  darwin: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  linux: '/usr/bin/google-chrome',
+};
+const chromeBin = CHROME_PATHS[process.platform];
+if (!chromeBin || !fs.existsSync(chromeBin)) {
+  console.error(`chrome-mcp: Chrome not found at ${chromeBin}`);
+  process.exit(1);
+}
+
+const args = process.argv.slice(2);
+
+if (args[0] === '--list' || args[0] === '-l') {
+  if (!fs.existsSync(PROFILES_DIR)) {
+    console.log('(no profiles yet — run: chrome-mcp <name>)');
+    process.exit(0);
+  }
+  const names = fs.readdirSync(PROFILES_DIR).filter((n) => !n.startsWith('.'));
+  if (!names.length) console.log('(no profiles yet)');
+  else names.forEach((n) => console.log(n));
+  process.exit(0);
+}
+
+const profile = args[0];
+
+if (!profile || profile.startsWith('-')) {
+  console.error('Usage: chrome-mcp <profile>');
+  console.error('       chrome-mcp --list');
+  process.exit(1);
+}
+
+const userDataDir = path.join(PROFILES_DIR, profile);
+fs.mkdirSync(userDataDir, { recursive: true });
+
+const isFresh = fs.readdirSync(userDataDir).length === 0;
+
+function isPortFree(p) {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.once('error', () => resolve(false));
+    srv.once('listening', () => srv.close(() => resolve(true)));
+    srv.listen(p, '127.0.0.1');
+  });
+}
+
+async function findFreePort(start = 9222, span = 20) {
+  for (let p = start; p < start + span; p++) {
+    if (await isPortFree(p)) return p;
+  }
+  throw new Error(`no free port in ${start}-${start + span - 1}`);
+}
+
+const port = await findFreePort();
+
+console.log(`profile:   ${profile}`);
+console.log(`data dir:  ${userDataDir}`);
+console.log(`debug:     http://127.0.0.1:${port}`);
+if (isFresh) {
+  console.log('\n[!] fresh profile — sign into your Google account, then come back.');
+}
+console.log('\nMCP config:');
+console.log(
+  JSON.stringify(
+    {
+      'chrome-devtools': {
+        command: 'npx',
+        args: ['chrome-devtools-mcp', '--browserUrl', `http://127.0.0.1:${port}`],
+      },
+    },
+    null,
+    2,
+  ),
+);
+console.log('\nCtrl-C to quit');
+
+const proc = spawn(
+  chromeBin,
+  [
+    `--remote-debugging-port=${port}`,
+    `--remote-allow-origins=*`,
+    `--user-data-dir=${userDataDir}`,
+    '--no-first-run',
+    '--no-default-browser-check',
+  ],
+  { stdio: 'inherit' },
+);
+
+proc.on('exit', (code) => process.exit(code ?? 0));
