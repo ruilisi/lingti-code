@@ -6,7 +6,8 @@ md2pdf() {
   fi
   local input="$1"
   local output="${2:-${input%.md}.pdf}"
-  local tmphtml=$(mktemp /tmp/md2pdf_XXXXXX.html)
+  local tmpdir=$(mktemp -d -t md2pdf)
+  local tmphtml="$tmpdir/index.html"
 
   pandoc "$input" -o "$tmphtml" --standalone \
     --metadata title="" \
@@ -38,6 +39,6 @@ CSS
     --print-to-pdf="$output" \
     "file://$tmphtml" 2>/dev/null
 
-  rm -f "$tmphtml"
+  rm -rf "$tmpdir"
   [[ -f "$output" ]] && echo "Created $output" || { echo "Failed to create $output"; return 1; }
 }
