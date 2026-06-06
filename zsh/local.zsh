@@ -1,5 +1,5 @@
 # Vim
-export EDITOR=vim
+export EDITOR=nvim
 
 
 #### Qiniu
