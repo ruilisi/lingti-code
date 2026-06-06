@@ -210,7 +210,6 @@ def install_homebrew
   puts 'Installing Homebrew packages...There may be some warnings.'
   puts '======================================================'
   run %(brew install zsh ctags git hub tmux reattach-to-user-namespace ripgrep ghi)
-  run %(brew install macvim)
   puts
   puts
 end
