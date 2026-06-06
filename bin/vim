@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# vim shim → nvim
+# Ensures `vim` invokes neovim in every context: interactive shells, scripts,
+# cron, $EDITOR consumers, GUI apps spawning a child process — anywhere
+# ~/.lingti/bin is on PATH ahead of /usr/bin and /opt/homebrew/bin.
+exec nvim "$@"
