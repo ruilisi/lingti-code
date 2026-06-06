@@ -10,14 +10,14 @@ task :install_spacevim do
     end
   end
 
-  run 'git clone https://github.com/lingti/SpaceVim ~/.SpaceVim' unless file_exists?('~/.SpaceVim')
+  run 'git clone https://github.com/SpaceVim/SpaceVim ~/.SpaceVim' unless file_exists?('~/.SpaceVim')
   run 'mkdir -p ~/.config && ln -nfs ~/.SpaceVim ~/.config/nvim'
 end
 
 task :update_spacevim do
   run %(
     cd ~/.SpaceVim
-    git remote set-url origin https://github.com/lingti/SpaceVim.git
+    git remote set-url origin https://github.com/SpaceVim/SpaceVim.git
     git pull --rebase
   )
 end

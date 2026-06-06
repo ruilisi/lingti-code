@@ -53,11 +53,6 @@ TRAPHUP() {
 alias ae='vim $lingti/zsh/aliases.zsh' #alias edit
 alias gar="killall -HUP -u \"$USER\" zsh"  #global alias reload
 
-# vim using
-if (( $+commands[mvim] )); then
-  alias vim="mvim -v"
-fi
-
 # mimic vim functions
 alias :q='exit'
 
