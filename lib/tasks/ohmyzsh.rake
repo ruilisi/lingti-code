@@ -9,7 +9,9 @@ def install_ohmyzsh
   puts 'Installing oh-my-zsh...'
 
   unless File.exist?(File.expand_path('~/.oh-my-zsh'))
-    run %{ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended }
+    # KEEP_ZSHRC=yes prevents the OMZ installer from overwriting ~/.zshrc,
+    # which is symlinked to zsh/zshrc by link_files (loads all zsh/*.zsh).
+    run %{ KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended }
   end
 
   zsh_custom = File.expand_path('~/.oh-my-zsh/custom/plugins')
