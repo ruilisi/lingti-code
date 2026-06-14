@@ -26,18 +26,43 @@ def install_ohmyzsh
 
   %w[~/.zsh.before ~/.zsh.after ~/.zsh.prompts].each { |d| FileUtils.mkdir_p(File.expand_path(d)) }
 
-  if (ENV['SHELL']).to_s.include? 'zsh'
-    puts 'Zsh is already configured as your shell of choice. Restart your session to load the new settings'
-  else
-    puts 'Setting zsh as your default shell'
-    if File.exist?('/usr/local/bin/zsh')
-      if File.readlines('/private/etc/shells').grep('/usr/local/bin/zsh').empty?
-        puts 'Adding zsh to standard shell list'
-        run %( echo "/usr/local/bin/zsh" | sudo tee -a /private/etc/shells )
-      end
-      run %( chsh -s /usr/local/bin/zsh )
-    else
-      run %( chsh -s /bin/zsh )
-    end
+  set_default_shell_to_zsh
+end
+
+desc 'Set zsh as the default login shell (idempotent; safe to re-run).'
+task :set_default_shell do
+  set_default_shell_to_zsh
+end
+
+# Pick the best zsh on PATH, register it in /etc/shells, run chsh.
+# Reads the *login* shell via dscl/getent — not ENV['SHELL'], which lies
+# when invoked from inside a zsh subshell during install.
+def set_default_shell_to_zsh
+  zsh_path = %w[/opt/homebrew/bin/zsh /usr/local/bin/zsh /bin/zsh].find { |p| File.executable?(p) }
+  unless zsh_path
+    puts 'No zsh binary found. Install one first (e.g. `brew install zsh`).'
+    return
   end
+
+  current_login_shell =
+    if macos?
+      `dscl . -read ~/ UserShell 2>/dev/null`.split.last
+    else
+      `getent passwd "$USER" 2>/dev/null`.chomp.split(':').last
+    end
+
+  if current_login_shell == zsh_path
+    puts "Login shell is already #{zsh_path}."
+    return
+  end
+
+  shells_file = '/etc/shells'
+  unless File.read(shells_file).split("\n").map(&:strip).include?(zsh_path)
+    puts "Adding #{zsh_path} to #{shells_file} (sudo required)"
+    run %( echo "#{zsh_path}" | sudo tee -a #{shells_file} > /dev/null )
+  end
+
+  puts "Setting login shell to #{zsh_path} (chsh may prompt for password)"
+  run %( chsh -s "#{zsh_path}" )
+  puts 'Done. Log out and back in (or open a new terminal tab) for it to take effect.'
 end
