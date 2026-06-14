@@ -1,6 +1,19 @@
 #!/bin/bash
 set -e
 
+# When invoked via `curl ... | bash`, the script body lives on stdin.
+# Child processes (brew, gem, git) inherit that stdin and can swallow the
+# rest of the script when they read input — causing the installer to exit
+# early after the first heavy `brew install`. Re-exec from a temp file so
+# stdin is detached from the script source.
+if [ -z "$LINGTI_INSTALL_REEXEC" ] && [ ! -t 0 ]; then
+  tmp=$(mktemp /tmp/lingti-install.XXXXXX)
+  cat > "$tmp"
+  trap "rm -f '$tmp'" EXIT
+  LINGTI_INSTALL_REEXEC=1 bash "$tmp" "$@" < /dev/tty
+  exit $?
+fi
+
 REPO="https://github.com/ruilisi/lingti-code.git"
 INSTALL_DIR="$HOME/.lingti"
 
