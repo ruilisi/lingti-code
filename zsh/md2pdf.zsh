@@ -1,11 +1,14 @@
 # Convert Markdown to PDF via Chrome headless (better table support)
-md2pdf() {
-  if [[ -z "$1" ]]; then
-    echo "Usage: md2pdf <file.md> [output.pdf]"
-    return 1
-  fi
+#
+# Usage:
+#   md2pdf file.md                       # → file.pdf
+#   md2pdf file.md output.pdf            # → output.pdf  (single-file, custom name)
+#   md2pdf a.md b.md c.md                # → a.pdf b.pdf c.pdf
+#   md2pdf *.md                          # → glob expansion, each → <basename>.pdf
+
+_md2pdf_one() {
   local input="$1"
-  local output="${2:-${input%.md}.pdf}"
+  local output="$2"
   local tmpdir=$(mktemp -d -t md2pdf)
   local tmphtml="$tmpdir/index.html"
 
@@ -40,5 +43,48 @@ CSS
     "file://$tmphtml" 2>/dev/null
 
   rm -rf "$tmpdir"
-  [[ -f "$output" ]] && echo "Created $output" || { echo "Failed to create $output"; return 1; }
+  if [[ -f "$output" ]]; then
+    echo "✅ $input → $output"
+    return 0
+  else
+    echo "❌ Failed: $input"
+    return 1
+  fi
+}
+
+md2pdf() {
+  if [[ -z "$1" ]]; then
+    echo "Usage:"
+    echo "  md2pdf <file.md>                     # → <file>.pdf"
+    echo "  md2pdf <file.md> <output.pdf>        # single-file, custom output name"
+    echo "  md2pdf <a.md> <b.md> <c.md> ...      # batch: each → <basename>.pdf"
+    return 1
+  fi
+
+  # Backward-compat single-file mode: md2pdf input.md custom-name.pdf
+  if [[ $# -eq 2 && "$2" != *.md && "$2" == *.pdf ]]; then
+    if [[ ! -f "$1" ]]; then
+      echo "❌ Not found: $1"
+      return 1
+    fi
+    _md2pdf_one "$1" "$2"
+    return $?
+  fi
+
+  # Batch mode: each arg is a .md file → corresponding .pdf
+  local rc=0 count=0 fail=0
+  for input in "$@"; do
+    if [[ ! -f "$input" ]]; then
+      echo "❌ Not found: $input"
+      fail=$((fail + 1))
+      rc=1
+      continue
+    fi
+    _md2pdf_one "$input" "${input%.md}.pdf" || { rc=1; fail=$((fail + 1)); }
+    count=$((count + 1))
+  done
+  if [[ $count -gt 1 ]]; then
+    echo "── $((count - fail))/$count converted ──"
+  fi
+  return $rc
 }
