@@ -8,7 +8,16 @@ def install_ohmyzsh
   puts
   puts 'Installing oh-my-zsh...'
 
-  unless File.exist?(File.expand_path('~/.oh-my-zsh'))
+  # Probe the actual entry script, not just the directory — a half-failed
+  # install leaves ~/.oh-my-zsh/ around without oh-my-zsh.sh and would
+  # otherwise be silently skipped on re-run.
+  omz_dir = File.expand_path('~/.oh-my-zsh')
+  omz_entry = File.join(omz_dir, 'oh-my-zsh.sh')
+  unless File.exist?(omz_entry)
+    if File.exist?(omz_dir)
+      puts "Removing incomplete #{omz_dir} (missing oh-my-zsh.sh)"
+      run %( rm -rf "#{omz_dir}" )
+    end
     # KEEP_ZSHRC=yes prevents the OMZ installer from overwriting ~/.zshrc,
     # which is symlinked to zsh/zshrc by link_files (loads all zsh/*.zsh).
     run %{ KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended }
