@@ -28,16 +28,31 @@ success() { echo -e "${GREEN}==>${RESET} ${BOLD}$1${RESET}"; }
 
 command_exists() { command -v "$1" &>/dev/null; }
 
+install_homebrew() {
+  info "Installing Homebrew (will prompt for sudo password)..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  # brew isn't on PATH yet — locate it and source shellenv for this shell.
+  local brew_bin
+  for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$brew_bin" ]; then
+      eval "$("$brew_bin" shellenv)"
+      break
+    fi
+  done
+
+  if ! command_exists brew; then
+    echo "Homebrew install completed but brew is still not on PATH. Aborting."
+    exit 1
+  fi
+}
+
 install_pkg() {
   local pkg="$1" cmd="${2:-$1}"
   if ! command_exists "$cmd"; then
     info "Installing $pkg..."
     if [ "$(uname)" = "Darwin" ]; then
-      if ! command_exists brew; then
-        echo "Homebrew is required but not installed. Install it first:"
-        echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-        exit 1
-      fi
+      command_exists brew || install_homebrew
       brew install "$pkg"
     else
       sudo apt install -y "$pkg"
