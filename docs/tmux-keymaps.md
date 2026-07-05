@@ -74,6 +74,7 @@ Press `PRE C-a` to send a literal `C-a` to the terminal.
 | Keymap | Action |
 |--------|--------|
 | `PRE Tab` | Switch to last active window |
+| `PRE ^` | Move current window to window 1 and focus there |
 
 ---
 
