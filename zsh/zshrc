@@ -38,3 +38,10 @@ export PATH="$HOME/.opencode/bin:$PATH"
 # Lingti bin must come LAST so its shims (vim → nvim, etc.) win over
 # everything else prepended above.
 export PATH="$HOME/.lingti/bin:$PATH"
+
+# Dedupe PATH — zprofile marked `path` unique via `typeset -gU`, but that
+# only enforces uniqueness on array assignments (`path=(...)`), not on
+# `export PATH=x:$PATH` used throughout downstream configs. Re-syncing the
+# array here collapses all duplicates while preserving first occurrence.
+typeset -aU path
+path=($path)

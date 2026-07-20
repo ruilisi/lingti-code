@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-PUPPETEER_MODULE="$HOME/.nvm/versions/node/v24.13.0/lib/node_modules/puppeteer"
+PUPPETEER_MODULE="$(npm root -g 2>/dev/null)/puppeteer"
 
 usage() {
   sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'
@@ -26,7 +26,7 @@ usage() {
 
 die() { echo "html2img: error: $*" >&2; exit 1; }
 
-[[ -d "$PUPPETEER_MODULE" ]] || die "Puppeteer not found at: $PUPPETEER_MODULE"
+[[ -d "$PUPPETEER_MODULE" ]] || die "Puppeteer not found at $PUPPETEER_MODULE — install with: npm install -g puppeteer"
 
 # ── Argument parsing ──────────────────────────────────────
 INPUT=""
