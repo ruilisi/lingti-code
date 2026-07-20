@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# html2slides — Dump each slide of an HTML deck to its own image
+#
+# Usage:
+#   html2slides <input.html>                 # → <input-dir>/<basename>/slide-01.png ...
+#   html2slides <input.html> -o <folder>     # dump into a specific folder
+#   html2slides <input.html> --format jpg    # JPEG instead of PNG
+#   html2slides <input.html> --scale 3       # higher-res (deviceScaleFactor)
+#   html2slides <input.html> --selector '.slide'
+#
+# Options:
+#   -o, --output    Output folder (default: same dir as input, named after the
+#                   HTML file with the extension stripped — e.g. index.html → index/)
+#   --selector      CSS selector for each slide (default: .slide)
+#   --format        Image format: png | jpg  (default: png)
+#   --scale         Device scale factor for crisp output (default: 2)
+#   --width         Force viewport width  (default: auto from first slide, else 1280)
+#   --height        Force viewport height (default: auto from first slide, else 720)
+#   -h, --help      Show this help
+#
+# Naming: each image is slide-NN, prefixed by the slide's id/data-tag when present
+#   (e.g. 01-cover.png, 02-pricing.png). Falls back to slide-NN.png.
+#
+# Renders each slide element individually via Puppeteer, so fixed-size decks
+# (1280×720 .slide boxes) come out pixel-exact, one file per slide.
+
+set -euo pipefail
+
+PUPPETEER_MODULE="$(npm root -g 2>/dev/null)/puppeteer"
+
+usage() { sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
+die()   { echo "html2slides: error: $*" >&2; exit 1; }
+
+[[ -d "$PUPPETEER_MODULE" ]] || die "Puppeteer not found at $PUPPETEER_MODULE — install with: npm install -g puppeteer"
+
+# ── Argument parsing ──────────────────────────────────────
+INPUT=""
+OUTPUT=""
+SELECTOR=".slide"
+FORMAT="png"
+SCALE=2
+WIDTH=""
+HEIGHT=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)     usage ;;
+    -o|--output)   OUTPUT="$2";   shift 2 ;;
+    --selector)    SELECTOR="$2"; shift 2 ;;
+    --format)      FORMAT="$2";   shift 2 ;;
+    --scale)       SCALE="$2";    shift 2 ;;
+    --width)       WIDTH="$2";    shift 2 ;;
+    --height)      HEIGHT="$2";   shift 2 ;;
+    -*)            die "unknown option: $1" ;;
+    *)
+      if   [[ -z "$INPUT"  ]]; then INPUT="$1"
+      elif [[ -z "$OUTPUT" ]]; then OUTPUT="$1"
+      else die "unexpected argument: $1"
+      fi
+      shift ;;
+  esac
+done
+
+[[ -n "$INPUT" ]] || usage
+[[ -f "$INPUT" ]] || die "file not found: $INPUT"
+
+# Normalise format
+FORMAT="$(echo "$FORMAT" | tr '[:upper:]' '[:lower:]')"
+[[ "$FORMAT" == "jpg" ]] && FORMAT="jpeg"
+[[ "$FORMAT" == "jpeg" || "$FORMAT" == "png" ]] || die "unsupported format: $FORMAT (use png or jpg)"
+
+ABS_INPUT="$(cd "$(dirname "$INPUT")" && pwd)/$(basename "$INPUT")"
+
+# Default output folder = same dir as input, named after the file (no extension)
+if [[ -z "$OUTPUT" ]]; then
+  BASE="$(basename "$ABS_INPUT")"
+  OUTPUT="$(dirname "$ABS_INPUT")/${BASE%.*}"
+fi
+mkdir -p "$OUTPUT"
+ABS_OUTPUT="$(cd "$OUTPUT" && pwd)"
+
+echo "html2slides: $ABS_INPUT"
+echo "             → $ABS_OUTPUT/  (selector: $SELECTOR, format: $FORMAT, scale: $SCALE)"
+
+# ── Capture via Puppeteer ─────────────────────────────────
+node - "$ABS_INPUT" "$ABS_OUTPUT" "$SELECTOR" "$FORMAT" "$SCALE" "$WIDTH" "$HEIGHT" "$PUPPETEER_MODULE" <<'EOF'
+const [,, inputPath, outDir, selector, format, scaleArg, widthArg, heightArg, modulePath] = process.argv;
+const path = require('path');
+
+(async () => {
+  const puppeteer = require(modulePath);
+  const scale = parseFloat(scaleArg) || 2;
+
+  const fs = require('fs');
+  const chromeCandidates = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  ];
+  const executablePath = chromeCandidates.find(p => fs.existsSync(p));
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    ...(executablePath ? { executablePath } : {}),
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  });
+  const page = await browser.newPage();
+
+  await page.goto(`file://${inputPath}`, { waitUntil: 'networkidle0', timeout: 60000 });
+
+  // Determine slide dimensions (explicit flags win, else measure first slide, else 1280×720)
+  const measured = await page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { w: Math.round(r.width), h: Math.round(r.height) };
+  }, selector);
+
+  const width  = parseInt(widthArg)  || (measured && measured.w) || 1280;
+  const height = parseInt(heightArg) || (measured && measured.h) || 720;
+
+  await page.setViewport({ width, height, deviceScaleFactor: scale });
+
+  // Try to load webfonts fully so CJK renders (mirrors html2pdf concern)
+  try { await page.evaluate(() => document.fonts && document.fonts.ready); } catch (_) {}
+  await new Promise(r => setTimeout(r, 600));
+
+  // Collect a stable, filesystem-safe name for each slide
+  const names = await page.evaluate((sel) => {
+    const slugify = (s) => (s || '')
+      .toString().trim().toLowerCase()
+      .replace(/[^a-z0-9一-龥]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40);
+    return [...document.querySelectorAll(sel)].map((el) =>
+      slugify(el.id || el.getAttribute('data-tag') || ''));
+  }, selector);
+
+  if (names.length === 0) {
+    console.error(`html2slides: no elements match "${selector}"`);
+    await browser.close();
+    process.exit(3);
+  }
+
+  const ext = format === 'jpeg' ? 'jpg' : 'png';
+  const pad = String(names.length).length; // 9→1, 12→2
+
+  const handles = await page.$$(selector);
+  for (let i = 0; i < handles.length; i++) {
+    const num = String(i + 1).padStart(Math.max(2, pad), '0');
+    const slug = names[i];
+    const file = slug ? `${num}-${slug}.${ext}` : `slide-${num}.${ext}`;
+    const outPath = path.join(outDir, file);
+
+    // Bring the slide into view so lazy content/animations settle before capture
+    await handles[i].scrollIntoView().catch(() => {});
+    await new Promise(r => setTimeout(r, 120));
+
+    await handles[i].screenshot({
+      path: outPath,
+      type: format === 'jpeg' ? 'jpeg' : 'png',
+      ...(format === 'jpeg' ? { quality: 92 } : {}),
+    });
+    console.log(`  ✓ ${file}`);
+  }
+
+  await browser.close();
+  console.log(`html2slides: wrote ${handles.length} image(s)`);
+})().catch(e => { console.error(e); process.exit(1); });
+EOF
