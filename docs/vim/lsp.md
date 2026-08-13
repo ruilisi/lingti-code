@@ -49,6 +49,19 @@ Custom flag in config (shared daemon mode):
 gopls = ['gopls', '-remote=auto']
 ```
 
+**Definition / reference keys on Go buffers:**
+
+| Key | Backend | Notes |
+|-----|---------|-------|
+| `gd` | `gopls` (`vim.lsp.buf.definition`) | jump to definition |
+| `gD` | `gopls` (`SpaceVim#lsp#go_to_typedef`) | jump to type definition |
+| `gi` | `gopls` (`vim.lsp.buf.implementation`) | jump to interface implementations |
+| `gr` | **`:GoReferrers` (vim-go, not gopls)** | overridden in `lingti.vim:78` — vim-go's referrer output is easier to read than raw LSP references. Same idea as `<SPC>l x` in the Go layer keymap. |
+| `K` | `gopls` (`SpaceVim#lsp#show_doc`) | hover documentation |
+| `<leader>rn` | `gopls` (`vim.lsp.buf.rename`) | rename symbol |
+
+See also `<SPC>l g` / `<SPC>l x` in the Go layer for the SpaceVim-style equivalents.
+
 ### TypeScript / JavaScript — `tsserver`
 
 ```bash

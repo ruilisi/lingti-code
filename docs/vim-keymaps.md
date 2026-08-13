@@ -466,7 +466,7 @@ All language keymaps use the `<SPC> l` prefix. These are only active when editin
 | `<SPC>l t` | Go test | Normal |
 | `<SPC>l T` | Go test function | Normal |
 | `<SPC>l v` | Freevars | Normal |
-| `<SPC>l x` | Go referrers | Normal |
+| `<SPC>l x` | Go referrers (same as `gr` on Go buffers — vim-go, not LSP) | Normal |
 
 ## 6.2 Ruby (`*.rb`)
 

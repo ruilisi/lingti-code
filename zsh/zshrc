@@ -45,3 +45,6 @@ export PATH="$HOME/.lingti/bin:$PATH"
 # array here collapses all duplicates while preserving first occurrence.
 typeset -aU path
 path=($path)
+
+# kimi-code
+export PATH="$HOME/.kimi-code/bin:$PATH"
