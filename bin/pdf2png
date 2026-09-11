@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# pdf2png — Convert PDF pages to PNG images (one image per page)
+#
+# Usage:
+#   pdf2png <input.pdf>                    # → <basename>-01.png, -02.png, ... beside the PDF
+#   pdf2png <input.pdf> -o <folder>        # write into a specific folder
+#   pdf2png <input.pdf> --dpi 300          # custom resolution (default 200)
+#   pdf2png <input.pdf> --page 3           # only page 3
+#   pdf2png <input.pdf> --first 1 --last 5 # explicit page range
+#
+# Options:
+#   -o, --output   Output folder (default: dir of input)
+#   --dpi          Resolution in dots-per-inch (default: 200)
+#   --page         Extract a single page number
+#   --first        First page to extract (default: 1)
+#   --last         Last page to extract  (default: last page)
+#   -h, --help     Show this help
+#
+# Wraps `pdftoppm` from poppler (brew install poppler).
+
+set -euo pipefail
+
+usage() { sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
+die()   { echo "pdf2png: error: $*" >&2; exit 1; }
+
+command -v pdftoppm >/dev/null || die "pdftoppm not found — install with: brew install poppler"
+
+# ── Argument parsing ──────────────────────────────────────
+INPUT=""
+OUTPUT=""
+DPI=200
+PAGE=""
+FIRST=""
+LAST=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)     usage ;;
+    -o|--output)   OUTPUT="$2"; shift 2 ;;
+    --dpi)         DPI="$2";    shift 2 ;;
+    --page)        PAGE="$2";   shift 2 ;;
+    --first)       FIRST="$2";  shift 2 ;;
+    --last)        LAST="$2";   shift 2 ;;
+    -*)            die "unknown option: $1" ;;
+    *)
+      if   [[ -z "$INPUT"  ]]; then INPUT="$1"
+      elif [[ -z "$OUTPUT" ]]; then OUTPUT="$1"
+      else die "unexpected argument: $1"
+      fi
+      shift ;;
+  esac
+done
+
+[[ -n "$INPUT" ]] || usage
+[[ -f "$INPUT" ]] || die "file not found: $INPUT"
+
+# --page is a convenience for --first=N --last=N
+if [[ -n "$PAGE" ]]; then
+  [[ -z "$FIRST" && -z "$LAST" ]] || die "--page can't be combined with --first/--last"
+  FIRST="$PAGE"; LAST="$PAGE"
+fi
+
+ABS_INPUT="$(cd "$(dirname "$INPUT")" && pwd)/$(basename "$INPUT")"
+BASE="$(basename "$ABS_INPUT" .pdf)"
+
+[[ -n "$OUTPUT" ]] || OUTPUT="$(dirname "$ABS_INPUT")"
+mkdir -p "$OUTPUT"
+ABS_OUTPUT="$(cd "$OUTPUT" && pwd)"
+
+# pdftoppm output prefix — "file" → file-01.png, file-02.png, ...
+PREFIX="$ABS_OUTPUT/$BASE"
+
+echo "pdf2png: $ABS_INPUT"
+echo "         → $PREFIX-NN.png  (dpi: $DPI${FIRST:+, pages: $FIRST-${LAST:-$FIRST}})"
+
+args=(-png -r "$DPI")
+[[ -n "$FIRST" ]] && args+=(-f "$FIRST")
+[[ -n "$LAST"  ]] && args+=(-l "$LAST")
+
+pdftoppm "${args[@]}" "$ABS_INPUT" "$PREFIX"
+
+# Report what got written
+shopt -s nullglob
+count=0
+for f in "$PREFIX"-*.png "$PREFIX.png"; do
+  [[ -f "$f" ]] || continue
+  echo "  ✓ $(basename "$f")"
+  count=$((count + 1))
+done
+echo "pdf2png: wrote $count image(s)"
