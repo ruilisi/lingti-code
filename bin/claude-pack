@@ -1,0 +1,4 @@
+#!/bin/sh
+# 打包本机的 Claude Code 习惯（skills / commands / CLAUDE.md / settings / memory / MCP）。
+# 真正的逻辑在 ~/.lingti/claude/sync.py —— 这里只转发，别在这加参数处理。
+exec python3 "$HOME/.lingti/claude/sync.py" pack "$@"

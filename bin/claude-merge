@@ -1,0 +1,3 @@
+#!/bin/sh
+# 把 claude-pack 打的包合并进本机（备份后合并，不是覆盖）。
+exec python3 "$HOME/.lingti/claude/sync.py" merge "$@"
