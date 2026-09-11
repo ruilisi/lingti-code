@@ -66,6 +66,9 @@ Press `PRE C-a` to send a literal `C-a` to the terminal.
 |--------|--------|
 | `PRE m` | Toggle mouse on / off |
 | `PRE F` | Launch Facebook PathPicker (`fpp`) on pane content |
+| `PRE C-p` | Set HTTP proxy to 127.0.0.1:8668 (one keystroke, no prompt) |
+| `PRE @`   | Set HTTP proxy — prompt pre-filled with 8668 (edit & Enter) |
+| `PRE C-x` | Unset proxy (runs `proxy off`) |
 
 ---
 
