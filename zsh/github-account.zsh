@@ -33,21 +33,45 @@ if [[ -f "$_ghuse_local_config" ]]; then
 fi
 
 ghuse() {
-  local alias="$1"
+  # Flags
+  local scope=auto  # auto (local if inside a repo, else refuse), or global
+  local alias=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -g|--global) scope=global; shift ;;
+      -l|--local)  scope=local;  shift ;;
+      -h|--help)
+        echo "Usage:"
+        echo "  ghuse                  show current identity and available accounts"
+        echo "  ghuse <alias>          set identity for CURRENT REPO (local) + rewrite remote URLs"
+        echo "  ghuse -g <alias>       set GLOBAL identity + global insteadOf (~/.gitconfig.user)"
+        return 0 ;;
+      *) alias="$1"; shift ;;
+    esac
+  done
 
   if [[ -z "$alias" ]]; then
-    # Show current identity
-    local name email
-    name=$(git config --global user.name 2>/dev/null)
-    email=$(git config --global user.email 2>/dev/null)
-    echo "Current GitHub account:"
-    echo "  name:  ${name:-<not set>}"
-    echo "  email: ${email:-<not set>}"
+    # Show current identity (prefer local when inside a repo)
+    local name email origin
+    if git rev-parse --git-dir &>/dev/null; then
+      name=$(git config user.name 2>/dev/null)
+      email=$(git config user.email 2>/dev/null)
+      origin=$(git remote get-url origin 2>/dev/null)
+      echo "Repo identity ($(git rev-parse --show-toplevel 2>/dev/null | sed "s|$HOME|~|")):"
+      echo "  name:   ${name:-<inherits global>}"
+      echo "  email:  ${email:-<inherits global>}"
+      [[ -n "$origin" ]] && echo "  origin: $origin"
+    else
+      name=$(git config --global user.name 2>/dev/null)
+      email=$(git config --global user.email 2>/dev/null)
+      echo "Global identity (no repo here):"
+      echo "  name:  ${name:-<not set>}"
+      echo "  email: ${email:-<not set>}"
+    fi
 
     if [[ ${#_GITHUB_ACCOUNTS[@]} -eq 0 ]]; then
       echo ""
-      echo "No accounts configured."
-      echo "Add entries to ~/.lingti.local/github-accounts:"
+      echo "No accounts configured. Add entries to ~/.lingti.local/github-accounts:"
       echo "  alias:username:email:~/.ssh/key_file:ssh_host_alias"
       return 0
     fi
@@ -85,28 +109,53 @@ ghuse() {
   local key="${rest%%:*}"; rest="${rest#*:}"
   local host="${rest%%:*}"
 
-  git config --global user.name  "$name"
-  git config --global user.email "$email"
+  # Resolve scope: `auto` = local when inside a repo, else global with a hint
+  if [[ "$scope" == "auto" ]]; then
+    if git rev-parse --git-dir &>/dev/null; then
+      scope=local
+    else
+      echo "Not inside a git repository. Use \`ghuse -g $alias\` to change the global identity."
+      return 1
+    fi
+  fi
 
-  # Update ~/.gitconfig.user — url rewrite + user identity
-  # Rewrite both https:// and git@github.com: URLs to the active host alias,
-  # so existing repo remotes don't need to be updated when switching accounts.
-  local gitconfig_user="$HOME/.gitconfig.user"
-  {
-    echo "[url \"git@${host}:\"]"
-    echo "    insteadOf = https://github.com/"
-    echo "    insteadOf = git@github.com:"
-    echo "[user]"
-    echo "    name = $name"
-    echo "    email = $email"
-  } > "$gitconfig_user"
+  if [[ "$scope" == "global" ]]; then
+    git config --global user.name  "$name"
+    git config --global user.email "$email"
+    local gitconfig_user="$HOME/.gitconfig.user"
+    {
+      echo "[url \"git@${host}:\"]"
+      echo "    insteadOf = https://github.com/"
+      echo "    insteadOf = git@github.com:"
+      echo "[user]"
+      echo "    name = $name"
+      echo "    email = $email"
+    } > "$gitconfig_user"
+    echo "✓ Global identity → $name <$email>"
+    echo "  SSH host:  git@${host}   key: $key"
+    return 0
+  fi
 
-  echo "✓ Switched to GitHub account: $name <$email>"
-  echo "  SSH key:  $key"
-  echo "  SSH host: git@${host}"
-  echo ""
-  echo "  Add this public key to https://github.com/settings/keys if not already done:"
-  echo "  $(cat ${~key}.pub 2>/dev/null || echo "(key file not found: ${key}.pub)")"
+  # scope == local: touch only this repo
+  git config user.name  "$name"
+  git config user.email "$email"
+
+  # Rewrite each remote's URL to point at the account's SSH host alias
+  local remote url new_url changed=0
+  for remote in $(git remote); do
+    url="$(git remote get-url "$remote")"
+    # Match https://github.com/... or git@github{,-anything}:... — normalise all to our host
+    new_url="$(echo "$url" | sed -E "s#^(https://github\.com/|git@github[a-zA-Z0-9._-]*:)#git@${host}:#")"
+    if [[ "$url" != "$new_url" ]]; then
+      git remote set-url "$remote" "$new_url"
+      echo "  $remote: $url → $new_url"
+      changed=1
+    fi
+  done
+
+  echo "✓ Repo identity → $name <$email>"
+  echo "  SSH host:  git@${host}   key: $key"
+  (( changed )) || echo "  (remotes already use git@${host}: — no rewrite needed)"
 }
 
 # Push current branch to the remote matching a given account alias.
