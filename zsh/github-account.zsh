@@ -43,8 +43,12 @@ ghuse() {
       -h|--help)
         echo "Usage:"
         echo "  ghuse                  show current identity and available accounts"
-        echo "  ghuse <alias>          set identity for CURRENT REPO (local) + rewrite remote URLs"
+        echo "  ghuse <alias>          inside a repo → set repo-local identity + rewrite remote URLs"
+        echo "                         outside a repo → export GIT_* env vars for THIS shell"
+        echo "                         (useful for cloning under a specific account; call"
+        echo "                          ghuse-clear to drop them)"
         echo "  ghuse -g <alias>       set GLOBAL identity + global insteadOf (~/.gitconfig.user)"
+        echo "  ghuse-clear            unset the shell-scoped GIT_* env vars"
         return 0 ;;
       *) alias="$1"; shift ;;
     esac
@@ -109,14 +113,33 @@ ghuse() {
   local key="${rest%%:*}"; rest="${rest#*:}"
   local host="${rest%%:*}"
 
-  # Resolve scope: `auto` = local when inside a repo, else global with a hint
+  # Resolve scope: `auto` = local when inside a repo, else shell env vars
+  # (persist until shell exits or `ghuse-clear`). Use -g to force global.
   if [[ "$scope" == "auto" ]]; then
     if git rev-parse --git-dir &>/dev/null; then
       scope=local
     else
-      echo "Not inside a git repository. Use \`ghuse -g $alias\` to change the global identity."
-      return 1
+      scope=env
     fi
+  fi
+
+  if [[ "$scope" == "env" ]]; then
+    export GIT_AUTHOR_NAME="$name"
+    export GIT_AUTHOR_EMAIL="$email"
+    export GIT_COMMITTER_NAME="$name"
+    export GIT_COMMITTER_EMAIL="$email"
+    # GIT_SSH_COMMAND scopes key selection to this shell — any `git clone`,
+    # `git fetch`, etc. runs authenticate as the target account regardless
+    # of the URL host or global ~/.ssh/config default.
+    export GIT_SSH_COMMAND="ssh -i ${~key} -o IdentitiesOnly=yes"
+    echo "✓ Shell env → $name <$email>  (this shell only)"
+    echo "  SSH key:   $key"
+    echo "  SSH host:  git@${host}"
+    echo ""
+    echo "  Now: git clone git@github.com:<user>/<repo>.git"
+    echo "  Then: cd <repo> && ghuse $alias    # make it stick locally in the clone"
+    echo "  Or:  ghuse-clear                   # drop these env vars"
+    return 0
   fi
 
   if [[ "$scope" == "global" ]]; then
@@ -200,6 +223,13 @@ ghpush() {
 
   echo "Pushing $branch → $remote (key: $key)"
   GIT_SSH_COMMAND="ssh -i ${~key} -o IdentitiesOnly=yes" git push "$remote" "$branch"
+}
+
+# Drop the shell-scoped git identity env vars set by `ghuse <alias>`
+# outside a repo. Idempotent.
+ghuse-clear() {
+  unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_SSH_COMMAND
+  echo "ghuse-clear: shell git env unset"
 }
 
 # Repo-local override: set git identity just for the current repo
