@@ -2,6 +2,11 @@
 
 input=$(cat)
 
+# Debug: full input dump — lets us see every field Claude Code passes
+cache="$HOME/.claude/cache"
+mkdir -p "$cache" 2>/dev/null
+echo "$input" | jq -c '.' > "$cache/statusline_input_debug.json" 2>/dev/null
+
 dir=$(echo "$input" | jq -r '.workspace.current_dir')
 model=$(echo "$input" | jq -r '.model.display_name')
 style=$(echo "$input" | jq -r '.output_style.name // empty')
@@ -10,12 +15,42 @@ total_out=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
 limit=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
 remaining=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
 
+# Session name — top-level .session_name in Claude Code hook input;
+# fall back to short .session_id when a session hasn't been named
+session_name=$(echo "$input" | jq -r '.session_name // empty' 2>/dev/null)
+if [ -z "$session_name" ]; then
+  sid=$(echo "$input" | jq -r '.session_id // empty' 2>/dev/null)
+  [ -n "$sid" ] && session_name="${sid:0:8}"
+fi
+
 total=$((total_in + total_out))
 
-status="$(basename "$dir") | $model"
+# 1M / 200k / 512 — pick the shortest human-readable form of a token limit
+humanize() {
+  local n=$1
+  if [ "$n" -ge 1000000 ]; then
+    if (( n % 1000000 == 0 )); then printf '%dM' $(( n / 1000000 ))
+    else printf '%.1fM' "$(echo "scale=1; $n/1000000" | bc)"
+    fi
+  elif [ "$n" -ge 1000 ]; then
+    printf '%dk' $(( n / 1000 ))
+  else
+    printf '%d' "$n"
+  fi
+}
+
+status="$(basename "$dir")"
+[ -n "$session_name" ] && status="$status » $session_name"
+status="$status | $model"
 [ -n "$style" ] && status="$status ($style)"
-[ $limit -gt 0 ] && status="$status | Tokens: $(printf "%'d/%'d" $total $limit 2>/dev/null || echo "$total/$limit")"
-[ -n "$remaining" ] && status="$status ($(printf "%.1f" $remaining)% remaining)"
+if [ $limit -gt 0 ]; then
+  # e.g. `1M T(66.6%)` — the % is REMAINING context (not used)
+  tokens_seg="$(humanize $limit) T"
+  if [ -n "$remaining" ]; then
+    tokens_seg="$tokens_seg($(printf '%.1f' "$remaining")%)"
+  fi
+  status="$status | $tokens_seg"
+fi
 
 # --- Weekly usage vs limit (Pro/Max only; present after first API response) ---
 # rate_limits carries used_percentage + resets_at (Unix epoch). Absent for API-key
@@ -55,7 +90,7 @@ if [ -n "$wk" ]; then
 
   # Compact so it doesn't clip: weekly-remaining + short bar + reset day. (5h kept
   # in cache/debug but not shown, to save width.)
-  seg="${c}Wk ${rem}% left ▕${bar}▏${rst}"
+  seg="${c}Wk ${rem}% ▕${bar}▏${rst}"
   if [ -n "$wk_reset" ]; then
     rd=$(date -r "$wk_reset" '+%a' 2>/dev/null)
     [ -n "$rd" ] && seg="$seg ${dim}↺$rd${rst}"
