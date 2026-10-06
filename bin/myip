@@ -1,0 +1,71 @@
+#!/bin/zsh
+# 看当前公网出口 IP。
+#
+#   myip            真·直连出口（绕开环境变量里的代理）
+#   myip -e         顺便看一眼「走环境变量代理」时的出口，用来判断代理在不在生效
+#   myip -p <port>  经指定的本机代理端口看出口（比如游戏加速器的 7891）
+#   myip -a         以上全看，并指出它们是否不同
+#
+# ## 为什么默认要绕开代理
+#
+# **curl 默认会读 http_proxy / https_proxy**。这台机器上那两个变量常年是设着的，
+# 所以不加 `--noproxy '*'` 时，`curl ifconfig.me` 报的是**那个代理的出口**，
+# 而不是本机真实出口。
+#
+# 这不是理论问题：2026-10 排查游戏加速器时就因为这个误判了几个小时 ——
+# 隧道开和关测出同一个 IP（其实两次都走了环境代理、压根没碰隧道），
+# 于是一路怀疑到「路由没下对」「UDP 被封」「TCP 栈坏了」，
+# 最后是看日志发现别的程序的流量正常穿过隧道才反应过来。
+#
+# 所以这个命令的默认行为是**真·直连**，想看代理出口要显式要。
+set -uo pipefail
+
+URL=https://ifconfig.me/ip
+TIMEOUT=10
+
+fetch() { curl -fsS --max-time $TIMEOUT "$@" "$URL" 2>/dev/null }
+
+direct() { fetch --noproxy '*' }
+via_env() { fetch }                       # 不传 --noproxy，让 curl 自己读环境变量
+via_port() { fetch --noproxy '*' -x "http://127.0.0.1:$1" }
+
+mode=direct
+port=""
+while (( $# )); do
+  case "$1" in
+    -e|--env)   mode=env ;;
+    -a|--all)   mode=all ;;
+    -p|--proxy) mode=port; port="${2:-7891}"; shift ;;
+    # 把文件开头的用法注释当 help 用，省得说明写两份、改一处漏一处
+    # 先剥 `#` 再剥一个空格，两步是为了让只有 `#` 的空注释行变成真空行
+    # （一步写成 `#\#( |$)` 要 extendedglob，脚本里默认没开）
+    -h|--help)  print -l "${(@)${(@)${(f)"$(<$0)"}[2,7]#\#}# }"; exit 0 ;;
+    *)          print -u2 "未知参数: $1（-h 看用法）"; exit 2 ;;
+  esac
+  shift
+done
+
+# 单值模式统一经 print 输出 —— ifconfig.me 的响应**不带换行**，
+# 直接让 curl 写 stdout 会把下一个提示符顶到同一行。
+one() { local v; v=$("$@"); print -r -- "${v:-（取不到）}"; [[ -n "$v" ]] }
+
+case "$mode" in
+  direct) one direct ;;
+  env)    one via_env ;;
+  port)   one via_port "$port" ;;
+  all)
+    d=$(direct); printf '%-22s %s\n' "真·直连" "${d:-（取不到）}"
+    if [[ -n "${http_proxy:-}${https_proxy:-}" ]]; then
+      e=$(via_env); printf '%-22s %s\n' "经环境代理" "${e:-（取不到）}"
+      printf '%-22s %s\n' "  （env 设的是）" "${http_proxy:-${https_proxy}}"
+      [[ -n "$d" && "$d" == "$e" ]] && printf '%-22s %s\n' "" "⚠️ 两者相同 —— 环境代理可能没生效，或它本来就直连"
+    else
+      printf '%-22s %s\n' "经环境代理" "（没设 http_proxy/https_proxy）"
+    fi
+    p=$(via_port 7891)
+    if [[ -n "$p" ]]; then
+      printf '%-22s %s\n' "经 7891（游戏加速）" "$p"
+      [[ "$p" == "$d" ]] && printf '%-22s %s\n' "" "与直连相同 —— 该站点不在加速范围内就是正常的（这是游戏加速器，不是全局代理）"
+    fi
+    ;;
+esac
