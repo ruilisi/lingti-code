@@ -424,19 +424,31 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         name = safe_name(form.get("name", [""])[0])
 
         if not text.strip():
-            return self.redirect_home()
+            return self.redirect_back()
 
         dest = unique_path(self.inbox(), name)
         with open(dest, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(text)
         rel = os.path.relpath(dest, os.getcwd())
         print(f"  <- pasted  {rel}  ({human(len(text.encode()))})", flush=True)
-        return self.redirect_home()
+        return self.redirect_back()
 
-    def redirect_home(self):
+    def redirect_back(self):
+        # Return to the page the paste came from (keeps the user in the
+        # subdirectory they were browsing). Only trust the Referer when it
+        # points at this same server; otherwise fall back to "/".
+        ref = self.headers.get("Referer", "")
         target = "/"
-        if self.token:
-            target += "?t=" + urllib.parse.quote(self.token)
+        if ref:
+            parsed = urllib.parse.urlparse(ref)
+            host_hdr = (self.headers.get("Host") or "").lower()
+            if parsed.netloc.lower() == host_hdr and parsed.path:
+                target = parsed.path
+                if parsed.query:
+                    target += "?" + parsed.query
+        if self.token and "t=" not in target:
+            sep = "&" if "?" in target else "?"
+            target += sep + "t=" + urllib.parse.quote(self.token)
         self.send_response(303)
         self.send_header("Location", target)
         self.send_header("Content-Length", "0")
