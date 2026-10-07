@@ -1,0 +1,568 @@
+#!/usr/bin/env python3
+"""ferry — serve the current folder over HTTP, and take files/text back.
+
+`python -m http.server` with the missing half: the other machine can also paste
+text (saved as a file) and upload files, without needing scp, a shared drive or
+a USB stick. Built for cross-machine debugging — hand a build to a Windows
+laptop, get its log back.
+
+Named for carrying things BOTH ways, which is the whole point; "drop" described
+only the receiving half. Avoids relay/bridge/tunnel/line on purpose — in this
+workspace those all already mean something in the proxy stack.
+
+    ferry                  serve $PWD on all interfaces, port 8777
+    ferry -p 9000          another port
+    ferry /some/dir        serve a specific directory
+    ferry --read-only      downloads only, no paste/upload
+    ferry --token hunter2  require ?t=hunter2 (or the PIN box) for everything
+
+Received files land in ./_inbox/ and never outside it, so an upload can never
+overwrite what you are serving.
+
+Python 3.8+, standard library only. Deliberately avoids the `cgi` module
+(removed in 3.13): uploads are raw-body PUTs, which also makes them streamable
+and curl/PowerShell friendly.
+"""
+
+import argparse
+import datetime
+import html
+import http.server
+import os
+import re
+import socket
+import socketserver
+import sys
+import urllib.parse
+
+INBOX = "_inbox"
+CHUNK = 64 * 1024
+
+# ---------------------------------------------------------------- helpers
+
+
+def human(n):
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024 or unit == "TB":
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1024.0
+
+
+def lan_ips():
+    """Every address another machine could plausibly reach us on.
+
+    Starts with the address used to reach the default route, which is the one
+    that actually works when a host has several interfaces (VPN, Docker bridge,
+    Wi-Fi) and the hostname resolves to the wrong one.
+    """
+    ips = []
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # no packets sent; just picks a route
+        ips.append(s.getsockname()[0])
+        s.close()
+    except OSError:
+        pass
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            ip = info[4][0]
+            if not ip.startswith("127.") and ip not in ips:
+                ips.append(ip)
+    except OSError:
+        pass
+    return ips
+
+
+_SAFE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def safe_name(name, fallback_ext=".txt"):
+    """Reduce an arbitrary client-supplied name to a bare, safe filename.
+
+    Takes the basename only and strips anything outside a conservative
+    character set, so a name like ../../.ssh/authorized_keys cannot escape the
+    inbox or smuggle a path separator through. An empty result gets a timestamp.
+    """
+    name = os.path.basename((name or "").strip().replace("\\", "/"))
+    name = _SAFE.sub("_", name).lstrip(".")
+    if not name:
+        name = datetime.datetime.now().strftime("paste-%Y%m%d-%H%M%S") + fallback_ext
+    return name[:180]
+
+
+def unique_path(directory, name):
+    """Never overwrite: a second upload of the same name becomes name-1.ext."""
+    base, ext = os.path.splitext(name)
+    candidate = os.path.join(directory, name)
+    i = 0
+    while os.path.exists(candidate):
+        i += 1
+        candidate = os.path.join(directory, f"{base}-{i}{ext}")
+    return candidate
+
+
+# ---------------------------------------------------------------- page
+
+PAGE = """<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ferry — {cwd}</title>
+<style>
+  :root {{
+    --bg:#15161a; --card:#1d1f25; --line:#2b2e36;
+    --fg:#e8e8ec; --mut:#9a9ca6; --acc:#d8685f;
+  }}
+  * {{ box-sizing:border-box }}
+  body {{ margin:0; background:var(--bg); color:var(--fg);
+    font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; padding:28px 20px 60px }}
+  .wrap {{ max-width:860px; margin:0 auto }}
+  h1 {{ font-size:15px; font-weight:600; margin:0 0 2px }}
+  .sub {{ color:var(--mut); font-size:12px; margin-bottom:22px; word-break:break-all }}
+  .card {{ background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:16px; margin-bottom:16px }}
+  .card h2 {{ font-size:12px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.07em; color:var(--mut); margin:0 0 12px }}
+  table {{ width:100%; border-collapse:collapse }}
+  td {{ padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:top }}
+  tr:last-child td {{ border-bottom:0 }}
+  td.sz {{ text-align:right; color:var(--mut); white-space:nowrap; width:1%; }}
+  td.dt {{ color:var(--mut); white-space:nowrap; width:1%; font-size:12px }}
+  a {{ color:var(--fg); text-decoration:none }}
+  a:hover {{ color:var(--acc); text-decoration:underline }}
+  .dir a {{ color:var(--acc) }}
+  textarea, input[type=text] {{ width:100%; background:#131419; color:var(--fg);
+    border:1px solid var(--line); border-radius:7px; padding:10px;
+    font:13px/1.5 ui-monospace,Menlo,monospace; min-height:44px }}
+  textarea {{ min-height:150px; resize:vertical }}
+  .row {{ display:flex; gap:10px; margin-top:10px; align-items:center; flex-wrap:wrap }}
+  button {{ background:var(--acc); color:#fff; border:0; border-radius:7px;
+    padding:9px 18px; font:600 13px ui-monospace,Menlo,monospace; cursor:pointer }}
+  button:hover {{ filter:brightness(1.1) }}
+  button.ghost {{ background:transparent; color:var(--fg); border:1px solid var(--line) }}
+  #zone {{ border:1.5px dashed var(--line); border-radius:9px; padding:26px;
+    text-align:center; color:var(--mut); cursor:pointer; transition:.15s }}
+  #zone.hot {{ border-color:var(--acc); color:var(--fg); background:#201c1c }}
+  #out {{ margin-top:10px; font-size:12px; color:var(--mut); white-space:pre-wrap }}
+  .ok {{ color:#6cc08b }} .err {{ color:#e06c6c }}
+  .hint {{ color:var(--mut); font-size:12px; margin-top:10px }}
+  code {{ background:#131419; padding:1px 5px; border-radius:4px }}
+</style>
+<div class="wrap">
+  <h1>ferry</h1>
+  <div class="sub">{cwd}</div>
+
+  <div class="card">
+    <h2>files</h2>
+    <table>{listing}</table>
+  </div>
+
+  {writable}
+</div>
+<script>
+const TOKEN = {token_js};
+function q(u) {{ return TOKEN ? u + (u.includes('?')?'&':'?') + 't=' + encodeURIComponent(TOKEN) : u; }}
+const out = document.getElementById('out');
+function say(msg, cls) {{ if (out) {{ out.textContent = msg; out.className = cls || ''; }} }}
+
+const zone = document.getElementById('zone');
+const picker = document.getElementById('picker');
+if (zone) {{
+  zone.onclick = () => picker.click();
+  picker.onchange = () => send([...picker.files]);
+  ['dragenter','dragover'].forEach(e => zone.addEventListener(e, ev => {{
+    ev.preventDefault(); zone.classList.add('hot');
+  }}));
+  ['dragleave','drop'].forEach(e => zone.addEventListener(e, ev => {{
+    ev.preventDefault(); zone.classList.remove('hot');
+  }}));
+  zone.addEventListener('drop', ev => send([...ev.dataTransfer.files]));
+}}
+
+async function send(files) {{
+  if (!files.length) return;
+  let done = 0;
+  for (const f of files) {{
+    say(`uploading ${{f.name}} (${{done+1}}/${{files.length}})…`);
+    try {{
+      // Raw-body PUT: streamable, no multipart parsing on the server, and the
+      // same endpoint curl --upload-file and PowerShell -InFile can use.
+      const r = await fetch(q('/_up?name=' + encodeURIComponent(f.name)),
+                            {{ method:'PUT', body:f }});
+      if (!r.ok) throw new Error(await r.text());
+      done++;
+    }} catch (e) {{
+      say('failed on ' + f.name + ': ' + e.message, 'err');
+      return;
+    }}
+  }}
+  say(`uploaded ${{done}} file(s) to _inbox/ — reloading…`, 'ok');
+  setTimeout(() => location.reload(), 700);
+}}
+</script>
+"""
+
+WRITABLE = """
+  <div class="card">
+    <h2>paste text &rarr; file</h2>
+    <form method="POST" action="{paste_action}">
+      <textarea name="text" placeholder="Paste anything here — a log, a stack trace, a config — and it is saved into _inbox/ as a file." autofocus></textarea>
+      <div class="row">
+        <input type="text" name="name" placeholder="filename (optional, e.g. helper.log)" style="flex:1;min-width:220px">
+        <button type="submit">save to _inbox/</button>
+      </div>
+    </form>
+    <div class="hint">Works without JavaScript. Empty filename &rarr; timestamped <code>paste-….txt</code>.</div>
+  </div>
+
+  <div class="card">
+    <h2>upload files</h2>
+    <div id="zone">drop files here, or click to choose</div>
+    <input id="picker" type="file" multiple hidden>
+    <div id="out"></div>
+    <div class="hint">
+      From a shell instead:<br>
+      <code>curl -T some.log {base}/_up/</code> &nbsp;(keep the trailing slash)<br>
+      <code>Invoke-WebRequest -Method Put -InFile some.log -Uri {base}/_up?name=some.log</code>
+    </div>
+  </div>
+"""
+
+
+# ---------------------------------------------------------------- handler
+
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    token = None
+    read_only = False
+    server_version = "ferry/1.0"
+
+    # -- shared ----------------------------------------------------------
+
+    def authed(self):
+        if not self.token:
+            return True
+        qs = urllib.parse.urlparse(self.path).query
+        return urllib.parse.parse_qs(qs).get("t", [""])[0] == self.token
+
+    def deny(self, code=403, msg="forbidden"):
+        body = msg.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    @staticmethod
+    def split_upload_path(path):
+        """Match /_up and /_upload, with an optional /<filename> after it.
+
+        Returns (endpoint, prefix, trailing) or (None, None, None) when the
+        path is not an upload endpoint.
+        """
+        for ep in ("/_upload", "/_up"):
+            if path == ep or path == ep + "/":
+                return ep, ep, ""
+            if path.startswith(ep + "/"):
+                return ep, ep, path[len(ep) + 1 :]
+        return None, None, None
+
+    def inbox(self):
+        path = os.path.join(os.getcwd(), INBOX)
+        os.makedirs(path, exist_ok=True)
+        return path
+
+    def log_message(self, fmt, *args):
+        sys.stderr.write("  %s %s\n" % (self.log_date_time_string(), fmt % args))
+
+    # -- GET -------------------------------------------------------------
+
+    # Extensions worth reading in a browser rather than downloading. The stdlib
+    # mimetypes database covers some of these and not others — .log resolves on
+    # one machine and not the next — so the set is stated here instead of being
+    # inherited, and a charset is attached because a UTF-8 log served as bare
+    # text/plain renders as mojibake.
+    TEXT_EXT = {
+        ".txt", ".log", ".md", ".markdown", ".json", ".yaml", ".yml", ".toml",
+        ".ini", ".conf", ".cfg", ".csv", ".tsv", ".env", ".diff", ".patch",
+        ".sh", ".bash", ".zsh", ".ps1", ".bat", ".cmd", ".sql", ".proto",
+        ".go", ".py", ".rb", ".rs", ".c", ".h", ".cc", ".cpp", ".java", ".kt",
+        ".swift", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".css", ".plist",
+        ".mod", ".sum", ".lock", ".gitignore", ".dockerignore", ".editorconfig",
+    }
+
+    def guess_type(self, path):
+        """Serve anything readable as text so it opens in the browser.
+
+        Without this, a file the mimetypes database does not recognise — an
+        uploaded .log on some systems, go.mod, a dotfile, anything
+        extensionless — is served as application/octet-stream and the browser
+        downloads it instead of showing it. That is the opposite of what you
+        want when the whole point is reading a log the other machine just sent.
+        """
+        ext = os.path.splitext(path)[1].lower()
+        if ext in self.TEXT_EXT:
+            return "text/plain; charset=utf-8"
+
+        base = super().guess_type(path)
+        if base in ("text/plain", "text/plain; charset=utf-8"):
+            return "text/plain; charset=utf-8"
+        if base != "application/octet-stream":
+            return base  # a known type (html, png, pdf) — leave it alone
+
+        # Unknown type: look at the bytes. Decoding cleanly as UTF-8 with no
+        # NULs is a good enough test for "a human can read this", and it is the
+        # only way to get extensionless files to open.
+        if self.looks_like_text(path):
+            return "text/plain; charset=utf-8"
+        return base
+
+    @staticmethod
+    def looks_like_text(path, probe=8192):
+        try:
+            with open(path, "rb") as fh:
+                chunk = fh.read(probe)
+        except OSError:
+            return False
+        if not chunk:
+            return True  # an empty file is harmless to show as text
+        if b"\x00" in chunk:
+            return False
+        try:
+            chunk.decode("utf-8")
+        except UnicodeDecodeError:
+            # A truncated multi-byte character at the probe boundary is not a
+            # reason to call the file binary.
+            try:
+                chunk[:-3].decode("utf-8")
+            except UnicodeDecodeError:
+                return False
+        return True
+
+    def do_GET(self):
+        if not self.authed():
+            return self.deny(401, "token required: add ?t=<token>\n")
+        return super().do_GET()
+
+    def list_directory(self, path):
+        """Replace http.server's bare listing with one that can also receive."""
+        try:
+            names = os.listdir(path)
+        except OSError:
+            self.send_error(404, "cannot list directory")
+            return None
+        names.sort(key=lambda n: (not os.path.isdir(os.path.join(path, n)), n.lower()))
+
+        rows = []
+        rel = os.path.relpath(path, os.getcwd())
+        if rel != ".":
+            rows.append('<tr class="dir"><td><a href="..">../</a></td><td class="sz"></td><td class="dt"></td></tr>')
+        for name in names:
+            full = os.path.join(path, name)
+            is_dir = os.path.isdir(full)
+            try:
+                st = os.stat(full)
+                size = "" if is_dir else human(st.st_size)
+                when = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%m-%d %H:%M")
+            except OSError:
+                size, when = "", ""
+            link = urllib.parse.quote(name) + ("/" if is_dir else "")
+            if self.token:
+                link += ("&" if "?" in link else "?") + "t=" + urllib.parse.quote(self.token)
+            rows.append(
+                '<tr class="%s"><td><a href="%s">%s%s</a></td>'
+                '<td class="sz">%s</td><td class="dt">%s</td></tr>'
+                % (
+                    "dir" if is_dir else "file",
+                    link,
+                    html.escape(name),
+                    "/" if is_dir else "",
+                    size,
+                    when,
+                )
+            )
+        if not rows:
+            rows.append('<tr><td colspan="3" style="color:#9a9ca6">(empty)</td></tr>')
+
+        base = "http://%s" % self.headers.get("Host", "localhost")
+        writable = ""
+        if not self.read_only:
+            action = "/_paste"
+            if self.token:
+                action += "?t=" + urllib.parse.quote(self.token)
+            writable = WRITABLE.format(paste_action=action, base=base)
+
+        page = PAGE.format(
+            cwd=html.escape(os.path.abspath(path)),
+            listing="".join(rows),
+            writable=writable,
+            token_js=("'%s'" % self.token) if self.token else "null",
+        )
+        body = page.encode("utf-8", "replace")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return None
+
+    # -- POST: paste -----------------------------------------------------
+
+    def do_POST(self):
+        if self.read_only:
+            return self.deny(405, "read-only mode\n")
+        if not self.authed():
+            return self.deny(401, "token required\n")
+        if urllib.parse.urlparse(self.path).path != "/_paste":
+            return self.deny(404, "not found\n")
+
+        length = int(self.headers.get("Content-Length") or 0)
+        if length <= 0:
+            return self.deny(400, "empty body\n")
+        raw = self.rfile.read(length).decode("utf-8", "replace")
+        form = urllib.parse.parse_qs(raw, keep_blank_values=True)
+        text = form.get("text", [""])[0]
+        name = safe_name(form.get("name", [""])[0])
+
+        if not text.strip():
+            return self.redirect_home()
+
+        dest = unique_path(self.inbox(), name)
+        with open(dest, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
+        rel = os.path.relpath(dest, os.getcwd())
+        print(f"  <- pasted  {rel}  ({human(len(text.encode()))})", flush=True)
+        return self.redirect_home()
+
+    def redirect_home(self):
+        target = "/"
+        if self.token:
+            target += "?t=" + urllib.parse.quote(self.token)
+        self.send_response(303)
+        self.send_header("Location", target)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    # -- PUT: upload -----------------------------------------------------
+
+    def do_PUT(self):
+        """Stream a raw request body to a file in the inbox.
+
+        Raw body rather than multipart/form-data on purpose: nothing has to be
+        parsed, memory use is constant regardless of file size, and the same
+        endpoint works from curl -T and PowerShell -InFile. It also sidesteps
+        the `cgi` module, which Python 3.13 removed.
+        """
+        if self.read_only:
+            return self.deny(405, "read-only mode\n")
+        if not self.authed():
+            return self.deny(401, "token required\n")
+
+        parsed = urllib.parse.urlparse(self.path)
+        endpoint, _, trailing = self.split_upload_path(parsed.path)
+        if endpoint is None:
+            return self.deny(404, "not found\n")
+
+        # Name, in order of preference: an explicit ?name=, then anything after
+        # the endpoint in the path. The latter is what `curl -T f URL/_up/`
+        # produces, because curl only appends the filename when the URL ends in
+        # a slash. Without this, that invocation silently names every upload
+        # after the endpoint itself.
+        qs = urllib.parse.parse_qs(parsed.query)
+        raw = qs.get("name", [""])[0] or trailing
+        name = safe_name(raw, ".bin")
+        length = int(self.headers.get("Content-Length") or 0)
+        if length <= 0:
+            return self.deny(411, "Content-Length required\n")
+
+        dest = unique_path(self.inbox(), name)
+        written = 0
+        try:
+            with open(dest, "wb") as fh:
+                while written < length:
+                    chunk = self.rfile.read(min(CHUNK, length - written))
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    written += len(chunk)
+        except OSError as e:
+            return self.deny(500, f"write failed: {e}\n")
+
+        if written != length:
+            # Truncated transfer: remove the partial file rather than leave
+            # something that looks complete.
+            os.unlink(dest)
+            return self.deny(400, f"truncated: got {written} of {length} bytes\n")
+
+        rel = os.path.relpath(dest, os.getcwd())
+        print(f"  <- uploaded {rel}  ({human(written)})", flush=True)
+        body = (rel + "\n").encode()
+        self.send_response(201)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    # curl -T without a path sends PUT; some tools send POST to /_up instead.
+    do_PATCH = do_PUT
+
+
+class Server(socketserver.ThreadingTCPServer):
+    # Threaded so one slow download does not block the paste box, and
+    # allow_reuse_address so restarting after Ctrl-C does not hit TIME_WAIT.
+    daemon_threads = True
+    allow_reuse_address = True
+
+
+# ---------------------------------------------------------------- main
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        prog="ferry",
+        description="Serve the current folder over HTTP, and accept pasted text and uploaded files.",
+    )
+    ap.add_argument("directory", nargs="?", default=".", help="directory to serve (default: .)")
+    ap.add_argument("-p", "--port", type=int, default=8777, help="port (default 8777)")
+    ap.add_argument("-b", "--bind", default="0.0.0.0", help="bind address (default all interfaces)")
+    ap.add_argument("--read-only", action="store_true", help="serve only; refuse paste and upload")
+    ap.add_argument("--token", help="require ?t=TOKEN on every request")
+    args = ap.parse_args()
+
+    try:
+        os.chdir(args.directory)
+    except OSError as e:
+        sys.exit(f"ferry: {e}")
+
+    Handler.token = args.token
+    Handler.read_only = args.read_only
+
+    try:
+        httpd = Server((args.bind, args.port), Handler)
+    except OSError as e:
+        sys.exit(f"ferry: cannot bind {args.bind}:{args.port}: {e}")
+
+    suffix = f"?t={urllib.parse.quote(args.token)}" if args.token else ""
+    print(f"\n  ferry — serving {os.getcwd()}")
+    print(f"  {'read-only' if args.read_only else 'uploads + paste land in ./' + INBOX + '/'}")
+    print()
+    print(f"    local    http://localhost:{args.port}/{suffix}")
+    for ip in lan_ips():
+        print(f"    network  http://{ip}:{args.port}/{suffix}")
+    if args.bind == "0.0.0.0" and not args.token and not args.read_only:
+        # Say it plainly: this is a writable endpoint on every interface.
+        print()
+        print("  note: reachable by anyone on this network, and they can write")
+        print("        into ./_inbox/. Use --token or --read-only on an")
+        print("        untrusted network.")
+    print("\n  Ctrl-C to stop\n", flush=True)
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n  stopped\n")
+    finally:
+        httpd.server_close()
+
+
+if __name__ == "__main__":
+    main()
