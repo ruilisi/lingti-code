@@ -503,3 +503,20 @@ tmux_conf_uninstall_plugins_on_reload=true
 # "$@"
 # # /!\ do not remove the previous line
 # #     do not write below this line
+
+# Ctrl-] (no prefix) → enter copy-mode to scroll back through the pane history.
+# Then: ↑/↓ (or k/j) line, PageUp/PageDown (or C-u/C-d) page, g/G top/bottom,
+# / to search, q or Esc to exit.
+bind -n C-] copy-mode
+
+# Scrollback: 5000 lines is roughly one long Claude Code turn, so history was
+# being dropped well before you would want to look back at it.
+set -g history-limit 50000
+
+# Shift+PageUp enters copy-mode already scrolled up one page, so the common
+# case (just look back a bit) needs one key instead of two.
+bind -n S-PageUp copy-mode -u
+
+# Mouse/trackpad scrolling. `prefix m` still toggles it off when you need to
+# select text with the terminal's own selection instead of tmux's.
+set -g mouse on
