@@ -12,14 +12,16 @@ _md2pdf_one() {
   local tmpdir=$(mktemp -d -t md2pdf)
   local tmphtml="$tmpdir/index.html"
 
+  # 图片等相对路径按 **md 文件自己的目录** 解析（再兜一个当前目录）。
+  # 没有这一行时，只有站在 md 所在目录跑才找得到图；在仓库根目录跑就全是
+  # 「Could not fetch resource 附件/xxx.png」，而且 PDF 照样生成，图却是空的。
   pandoc "$input" -o "$tmphtml" --standalone \
+    --resource-path="$(cd "$(dirname "$input")" && pwd):$PWD" \
     --metadata title="" \
     --highlight-style=tango \
     --embed-resources \
     --mathjax \
     -H <(cat <<'CSS'
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   body { font-family: "Noto Sans SC", "PingFang SC", "Heiti SC", "Microsoft YaHei", "Helvetica Neue", sans-serif; font-size: 14px; line-height: 1.6; max-width: 860px; margin: 40px auto; padding: 0 40px; color: #222; }
