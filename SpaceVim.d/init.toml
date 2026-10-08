@@ -112,8 +112,12 @@ merged = false
 [[custom_plugins]]
 repo = "zivyangll/git-blame.vim"
 
-[[custom_plugins]]
-repo = "github/copilot.vim"
+# GitHub Copilot — disabled while the subscription is lapsed. Keeping the
+# entry commented so re-enabling is one uncomment away. (When active, it
+# would otherwise block startup every launch with an "subscription ended"
+# `inputlist()` prompt.)
+# [[custom_plugins]]
+# repo = "github/copilot.vim"
 
 [[layers]]
 name = "gtags"

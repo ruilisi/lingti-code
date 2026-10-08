@@ -158,5 +158,9 @@ for fpath in split(globpath(vimsettings, '*.vim'), '\n')
 endfor
 let g:smoothie_enabled = 0
 let ruby_no_expensive=1
-imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
-let g:copilot_no_tab_map = v:true
+" Copilot bindings — only wire up if the plugin is actually loaded (see
+" init.toml). Otherwise mapping copilot#Accept errors on each startup.
+if exists('*copilot#Accept')
+  imap <silent><script><expr> <C-J> copilot#Accept("\<CR>")
+  let g:copilot_no_tab_map = v:true
+endif
