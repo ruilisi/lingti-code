@@ -421,6 +421,10 @@ tmux_conf_urlscan_options="--compact --dedupe"
 # move current window to the first position
 bind T move-window -t 0 \; move-window -r
 
+# PREFIX N: previous window. (PREFIX p is paste-buffer in oh-my-tmux, and p is
+# paste in vim — so previous-window moves to N; PREFIX n stays next-window.)
+bind N previous-window
+
 
 # -- tpm -----------------------------------------------------------------------
 
