@@ -230,8 +230,35 @@ def install_fonts
     end
   end
 
-  run %( mkdir -p ~/.fonts && cp ~/.lingti/fonts/* ~/.fonts && fc-cache -vf ~/.fonts ) if linux?
+  install_fonts_linux if linux?
   puts
+end
+
+def install_fonts_linux
+  # Always ship the bundled Powerline fallback — tiny, offline, lets agnoster
+  # render its arrows even if the Nerd Font download below fails.
+  run %( mkdir -p ~/.fonts && cp -f $HOME/.lingti/fonts/* ~/.fonts )
+
+  nerd_dir = File.expand_path("~/.fonts/#{NERD_FONT_FAMILY.gsub(' ', '')}")
+  if File.directory?(nerd_dir) && !Dir.empty?(nerd_dir)
+    puts "Nerd Font already present at #{nerd_dir} — skipping download."
+  elsif !command_exists?('curl') || !command_exists?('unzip')
+    puts 'curl and/or unzip missing — install them to pull the Nerd Font (apt install curl unzip).'
+  else
+    puts "Downloading JetBrainsMono Nerd Font from Nerd Fonts releases."
+    run %(
+      set -e
+      tmp=$(mktemp -d)
+      trap 'rm -rf "$tmp"' EXIT
+      curl -fsSL -o "$tmp/font.zip" \\
+        https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+      mkdir -p "#{nerd_dir}"
+      unzip -oq "$tmp/font.zip" -d "#{nerd_dir}"
+    )
+    puts "Set your terminal font to '#{NERD_FONT_FAMILY} Mono' after install."
+  end
+
+  run %( fc-cache -fv ~/.fonts > /dev/null )
 end
 
 def needs_migration_to_vundle?
