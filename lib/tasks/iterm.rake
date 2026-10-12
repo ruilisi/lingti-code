@@ -19,25 +19,16 @@ def install_term_theme
     return
   end
 
-  # Ask the user which theme he wants to install
-  message = 'Which theme would you like to apply to your iTerm2 profile?'
-  color_scheme = ask message, iTerm_available_themes, default: 'None'
-
-  return if color_scheme == 'None'
-
+  # No prompts: always apply Solarized Dark to every profile. Switch to
+  # a different preset in iTerm2 → Preferences → Profiles → Colors → Load
+  # Presets… (both Solarized Light and Solarized Dark are already merged
+  # into the plist above).
+  color_scheme = 'Solarized Dark'
   color_scheme_file = File.join('iTerm2', "#{color_scheme}.itermcolors")
+  puts "Applying '#{color_scheme}' to all iTerm2 profiles."
 
-  # Ask the user on which profile he wants to install the theme
   profiles = iTerm_profile_list
-  message = "I've found #{profiles.size} #{profiles.size > 1 ? 'profiles' : 'profile'} on your iTerm2 configuration, which one would you like to apply the Solarized theme to?"
-  profiles << 'All'
-  selected = ask message, profiles, default: 'All'
-
-  if selected == 'All'
-    (profiles.size - 1).times { |idx| apply_theme_to_iterm_profile_idx idx, color_scheme_file }
-  else
-    apply_theme_to_iterm_profile_idx profiles.index(selected), color_scheme_file
-  end
+  profiles.size.times { |idx| apply_theme_to_iterm_profile_idx idx, color_scheme_file }
 end
 
 def iTerm_available_themes
