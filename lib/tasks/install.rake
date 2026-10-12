@@ -1,18 +1,23 @@
 # frozen_string_literal: true
 
+# Install order is "terminal-first": whatever a new user needs to see a
+# usable, pretty terminal within the first minute runs ahead of everything
+# else. Homebrew → iTerm2 → font → color theme → shell/editor configs →
+# dev tooling → ruby-ecosystem leftovers.
 INSTALL_STEPS = [
-  { name: 'submodules',    desc: 'Git submodules' },
-  { name: 'homebrew',      desc: 'Homebrew packages',    platform: :macos },
-  { name: 'rvm_binstubs',  desc: 'RVM Bundler support' },
+  { name: 'homebrew',      desc: 'Homebrew packages',              platform: :macos },
+  { name: 'iterm2',        desc: 'iTerm2 (macOS terminal)',        platform: :macos },
+  { name: 'fonts',         desc: 'JetBrainsMono Nerd Font / Powerline fallback' },
+  { name: 'term_theme',    desc: 'iTerm2 solarized theme',         platform: :macos },
   { name: 'link_files',    desc: 'Symlink config files' },
-  { name: 'ohmyzsh',       desc: 'ZSH/oh-my-zsh setup' },
-  { name: 'spacevim',      desc: 'SpaceVim setup' },
+  { name: 'ohmyzsh',       desc: 'ZSH / oh-my-zsh setup' },
+  { name: 'spacevim',      desc: 'SpaceVim (Neovim) setup' },
+  { name: 'submodules',    desc: 'Git submodules' },
   { name: 'asdf',          desc: 'ASDF version manager' },
   { name: 'claude',        desc: 'Claude CLI config' },
   { name: 'gemini',        desc: 'Gemini CLI' },
   { name: 'qshell',        desc: 'Qshell (Qiniu Cloud CLI)' },
-  { name: 'fonts',         desc: 'Terminal fonts (Nerd Font / Powerline fallback)' },
-  { name: 'term_theme',    desc: 'iTerm2 theme',         platform: :macos },
+  { name: 'rvm_binstubs',  desc: 'RVM Bundler support' },
   { name: 'bundle_config', desc: 'Bundler config' },
 ].freeze
 
@@ -32,6 +37,7 @@ def run_step(name)
       puts
     end
   when 'homebrew'      then install_homebrew
+  when 'iterm2'        then install_iterm2
   when 'rvm_binstubs'  then install_rvm_binstubs
   when 'link_files'    then Rake::Task['link_files'].execute
   when 'ohmyzsh'       then Rake::Task['install_ohmyzsh'].execute
@@ -211,6 +217,23 @@ def install_homebrew
   puts '======================================================'
   run %(brew install zsh ctags git hub tmux reattach-to-user-namespace ripgrep ghi)
   puts
+  puts
+end
+
+def install_iterm2
+  return unless macos?
+  if File.exist?('/Applications/iTerm.app')
+    puts 'iTerm2 already installed — skipping.'
+    return
+  end
+  unless command_exists?('brew')
+    puts 'Homebrew missing; skipping iTerm2 (install manually from https://iterm2.com).'
+    return
+  end
+  puts '======================================================'
+  puts 'Installing iTerm2 via Homebrew cask.'
+  puts '======================================================'
+  run %( brew install --cask iterm2 )
   puts
 end
 
