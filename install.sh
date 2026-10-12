@@ -85,7 +85,6 @@ info "Cloning lingti-code..."
 git clone --depth=1 "$REPO" "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 
-[ "$1" = "ask" ] && export ASK="true"
 rake install
 
 success "Installation complete! Restarting shell..."
