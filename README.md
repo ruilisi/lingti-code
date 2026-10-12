@@ -1,6 +1,6 @@
 <p align="center"><b>lingti-code</b> — AI-ready development environment built on Tmux + Neovim + Zsh.<br>One-line install on <b>macOS</b>, <b>Ubuntu</b>, and <b>Docker</b>.</p>
 
-<p align="center"><sub>Trusted By：中国人民大学 智慧治理学院</sub></p>
+<p align="center"><sub>Trusted By：中国人民大学 智慧治理学院 · 睿立思 ecosystem (10,000+ enterprises, 10,000,000+ individual users)</sub></p>
 
 ---
 
@@ -8,13 +8,31 @@
 
 ---
 
+## Why Lingti-Code
+
+Nearly a decade in continuous production use (since 2017) across the Suzhou Ruilisi (睿立思) product family — the engineers behind [Lingti Game Booster](https://game.lingti.com) (#13 on App Store China Top Grossing, 2020), [Lingti Router](https://router.lingti.com), [Xiemala](https://xiemala.com), [Lingti Esports](https://hy.lingti.com) and the Lingti AI stack. The same shell/editor/multiplexer configuration ships daily code that serves **10,000+ enterprises** and **10,000,000+ individual users**, and is used in academic research at **中国人民大学 智慧治理学院**.
+
+Open-sourced in January 2026 so anyone can bootstrap the same environment in a single command. The long-term aim is for lingti-code to become the default "new-laptop day-one" setup for developers worldwide — short URL, zero prompts, visibly beautiful terminal within the first minute.
+
+---
+
 ## Install
+
+Short URL (recommended):
+
+```bash
+curl -fsSL lingti.com/code/install.sh | bash
+```
+
+GitHub fallback (same script, direct source):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ruilisi/lingti-code/main/install.sh | bash
 ```
 
-On macOS, the installer now attempts to install `JetBrainsMono Nerd Font` via Homebrew so `agnoster` and other glyph-heavy prompts render correctly.
+The installer is **fully non-interactive** — no y/n prompts, no theme pickers, just a sensible default for everything (`ASK=true rake install` if you want prompts back).
+
+Terminal-first ordering: Homebrew → iTerm2 → JetBrainsMono Nerd Font → Solarized Dark theme → config symlinks → oh-my-zsh → SpaceVim → everything else. You see a pretty terminal before the long tail of dev-tool downloads finishes.
 
 <details>
 <summary><b>Docker</b></summary>
@@ -22,7 +40,7 @@ On macOS, the installer now attempts to install `JetBrainsMono Nerd Font` via Ho
 ```bash
 docker run -it ubuntu:latest
 apt update && apt install -y git curl zsh sudo
-curl -fsSL https://raw.githubusercontent.com/ruilisi/lingti-code/main/install.sh | bash
+curl -fsSL lingti.com/code/install.sh | bash
 ```
 </details>
 
@@ -43,16 +61,45 @@ cd ~/.lingti && git pull --rebase && rake update
 
 ---
 
-## What's Included
+## What You Get
 
-| Category | Details |
-|----------|---------|
-| **Shell** | ZSH + [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh), 100+ aliases, [fasd](https://github.com/clvv/fasd) navigation, custom prompts |
-| **Editor** | Neovim + [SpaceVim](https://spacevim.org/), LSP, snippets, ALE linting, [Copilot](https://github.com/features/copilot) |
-| **Multiplexer** | Tmux with vim keybindings, `Ctrl-a` prefix, vim-tmux-navigator |
-| **Git** | Sensible defaults, extensive aliases (`ga`, `gc`, `gd`, `gfr`…), commitlint |
-| **Tools** | asdf version manager, ctags, IRB/Pry enhancements |
-| **AI** | [Claude Code](https://claude.ai/code) CLI config, notification hooks, custom status line, `ralphal` autonomous agent loop |
+### Shell
+
+- **ZSH + [oh-my-zsh](https://github.com/ohmyzsh/ohmyzsh)** with the `agnoster` theme (red when the last command failed, dim when it worked)
+- **100+ aliases** covering git, docker, kubernetes, filesystem navigation, networking
+- **[fasd](https://github.com/clvv/fasd)** `z`-style directory jumping based on access history
+- Per-machine overrides via `~/.zsh.before/` and `~/.zsh.after/` — never edit the shared config
+
+### Editor
+
+- **Neovim + [SpaceVim](https://spacevim.org/)** with native LSP wired to `pyright`, `gopls`, `tsserver`, `sourcekit`, `solargraph`, `rust_analyzer`
+- **ALE** linter with auto-fix on save, snippets, and `<SPC>`-leader menus for every language layer
+- **GitHub Copilot** support (disabled by default; one uncomment to re-enable after an active subscription)
+
+### Multiplexer
+
+- **Tmux** with `Ctrl-a` prefix, vim-style pane navigation (`PRE h/j/k/l`), splits on `PRE -` / `PRE _`
+- **vim-tmux-navigator** so `C-h / C-j / C-k / C-l` move between Vim splits and tmux panes transparently
+- `PRE ^` moves current window to position 1; `PRE C-p` toggles HTTP proxy on 127.0.0.1:8668; see [docs/tmux-keymaps.md](docs/tmux-keymaps.md)
+
+### Git
+
+- Hundreds of aliases (`ga`, `gc`, `gd`, `gfr`, `gpr-all` to rebase every subdirectory repo)
+- `ghuse <alias>` — per-repo GitHub account switcher (sets `user.name/email` + rewrites remote URL to the right SSH host alias); `ghuse -g` for the global default
+- Conventional-commits enforcement via commitlint + Husky
+
+### Tools
+
+- **asdf** version manager with pinned `~/.tool-versions`
+- **ctags** with language-aware exclude lists
+- `pdf2png`, `md2pdf`, `html2img`, `html2slides`, `yt-share`, `chrome-mcp`, `ferry` (two-way HTTP file bridge) in `bin/`
+
+### AI
+
+- **[Claude Code](https://claude.ai/code)** CLI config, notification hooks, custom status line showing session name + weekly rate-limit bar
+- `yolo` — Claude Code with `--dangerously-skip-permissions`
+- `ralphal` — autonomous iteration loop driving Claude Code from a `prd.json` task spec
+- `set_proxy` / `proxy` with interactive port editing, bound to `PRE C-p` in tmux
 
 ---
 
@@ -61,13 +108,14 @@ cd ~/.lingti && git pull --rebase && rake update
 ```
 ~/.lingti/
 ├── Rakefile              # Installation orchestrator
+├── install.sh            # One-line bootstrap (served at lingti.com/code/install.sh)
 ├── lib/tasks/            # Modular rake tasks
 ├── zsh/                  # ZSH config (oh-my-zsh + custom files)
 ├── SpaceVim.d/           # Neovim config (init.toml, autoload/, snippets/)
 ├── git/                  # Git config
 ├── tmux/                 # Tmux config
 ├── claude/               # Claude Code config
-├── bin/                  # CLI utilities (lingti command)
+├── bin/                  # CLI utilities (lingti command, pdf2png, ferry, chrome-mcp, …)
 └── docs/                 # Documentation
 ```
 
@@ -104,8 +152,6 @@ yolo --model opus             # use a specific model
 yolo -p "summarize README" > out.txt  # pipe output
 ```
 
----
-
 ### AI Agent Loop (ralphal)
 
 `ralphal` runs [Ralph](https://github.com/snarktank/ralph) with Claude Code — an autonomous loop that implements tasks from a `prd.json` file, committing after each iteration until all stories are done or the iteration limit is reached.
@@ -122,8 +168,6 @@ ralphal 5      # run up to 5 iterations
 3. Run `ralphal`
 
 State files (`progress.txt`, `.last-branch`, `archive/`) are written to the current working directory. Ralph detects branch changes and archives previous run artifacts automatically.
-
----
 
 ### Git
 
@@ -158,7 +202,7 @@ User overrides in `~/.tmux.conf.user`.
 
 ```bash
 rake -T                  # List all tasks
-rake install             # Full install
+rake install             # Full install (non-interactive)
 rake install_fonts       # Terminal fonts for prompt glyphs
 rake install_ohmyzsh     # ZSH/oh-my-zsh only
 rake install_spacevim    # Neovim/SpaceVim only
@@ -166,10 +210,21 @@ rake install_asdf        # Version manager only
 rake install_claude_code # Claude Code CLI (optional, large download)
 rake install_claude      # Claude Code config only
 rake install_gemini      # Gemini CLI only
+rake set_default_shell   # Idempotently switch login shell to zsh
 
-ASK=true rake install    # Interactive mode
+ASK=true rake install    # Interactive mode (per-section prompts)
 DEBUG=true rake install  # Dry run
 ```
+
+---
+
+## Who Uses It
+
+- **Industry**: [Suzhou Ruilisi Network Technology Co., Ltd.](https://lingti.com) — the Lingti product family (Game Booster, Router, Esports platform, AI stack, Xiemala collaboration tool), serving 10,000+ enterprises and 10,000,000+ individual users; this configuration ships their production code daily.
+- **Academia**: 中国人民大学 智慧治理学院.
+- **The ambition**: become the default development environment for anyone opening a new laptop — regardless of OS, language stack, or experience level.
+
+Using lingti-code at your company or lab? Open a PR adding yourself here.
 
 ---
 
