@@ -1,34 +1,56 @@
 # frozen_string_literal: true
 
+desc 'Apply Solarized Dark + JetBrainsMono Nerd Font to every iTerm2 profile. Run after launching iTerm2 at least once.'
+task :install_term_theme do
+  install_term_theme
+end
+
+ITERM_PLIST = File.expand_path('~/Library/Preferences/com.googlecode.iterm2.plist').freeze
+# PostScript name is baked into the font file metadata; cask
+# `font-jetbrains-mono-nerd-font` installs this variant as
+# ~/Library/Fonts/JetBrainsMonoNerdFontMono-Regular.ttf.
+ITERM_NERD_FONT = 'JetBrainsMonoNerdFontMono-Regular 13'
+
 def install_term_theme
   puts '======================================================'
-  puts 'Installing iTerm2 solarized theme.'
+  puts 'Configuring iTerm2 (Solarized Dark + JetBrainsMono Nerd Font).'
   puts '======================================================'
-  run %( /usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Solarized Light' dict" ~/Library/Preferences/com.googlecode.iterm2.plist )
-  run %( /usr/libexec/PlistBuddy -c "Merge 'iTerm2/Solarized Light.itermcolors' :'Custom Color Presets':'Solarized Light'" ~/Library/Preferences/com.googlecode.iterm2.plist )
-  run %( /usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Solarized Dark' dict" ~/Library/Preferences/com.googlecode.iterm2.plist )
-  run %( /usr/libexec/PlistBuddy -c "Merge 'iTerm2/Solarized Dark.itermcolors' :'Custom Color Presets':'Solarized Dark'" ~/Library/Preferences/com.googlecode.iterm2.plist )
 
-  # If iTerm2 is not installed or has never run, we can't autoinstall the profile since the plist is not there
-  unless File.exist?(File.join(ENV['HOME'], '/Library/Preferences/com.googlecode.iterm2.plist'))
-    puts '======================================================'
-    puts 'To make sure your profile is using the solarized theme'
-    puts 'Please check your settings under:'
-    puts 'Preferences> Profiles> [your profile]> Colors> Load Preset..'
-    puts '======================================================'
+  unless File.exist?(ITERM_PLIST)
+    puts 'iTerm2 preferences not initialized yet — launch iTerm2.app once'
+    puts 'so it writes its plist, then re-run: `cd ~/.lingti && rake install_term_theme`'
     return
   end
 
-  # No prompts: always apply Solarized Dark to every profile. Switch to
-  # a different preset in iTerm2 → Preferences → Profiles → Colors → Load
-  # Presets… (both Solarized Light and Solarized Dark are already merged
-  # into the plist above).
-  color_scheme = 'Solarized Dark'
-  color_scheme_file = File.join('iTerm2', "#{color_scheme}.itermcolors")
-  puts "Applying '#{color_scheme}' to all iTerm2 profiles."
+  # Quit iTerm if it's running — in-memory state would overwrite our plist
+  # edits on exit. Harmless no-op when iTerm isn't open.
+  run %( osascript -e 'tell application "iTerm" to quit' 2>/dev/null || true )
 
+  # Merge both Solarized presets into Custom Color Presets so the user
+  # can also pick Light later from Preferences → Colors → Load Presets.
+  %w[Light Dark].each do |variant|
+    run %( /usr/libexec/PlistBuddy -c "Add :'Custom Color Presets':'Solarized #{variant}' dict" "#{ITERM_PLIST}" 2>/dev/null )
+    run %( /usr/libexec/PlistBuddy -c "Merge 'iTerm2/Solarized #{variant}.itermcolors' :'Custom Color Presets':'Solarized #{variant}'" "#{ITERM_PLIST}" )
+  end
+
+  color_scheme_file = File.join('iTerm2', 'Solarized Dark.itermcolors')
   profiles = iTerm_profile_list
-  profiles.size.times { |idx| apply_theme_to_iterm_profile_idx idx, color_scheme_file }
+  puts "Applying Solarized Dark + #{ITERM_NERD_FONT.inspect} to #{profiles.size} iTerm2 profile(s)."
+
+  profiles.size.times do |idx|
+    apply_theme_to_iterm_profile_idx(idx, color_scheme_file)
+    set_iterm_profile_font(idx, ITERM_NERD_FONT)
+  end
+end
+
+def set_iterm_profile_font(index, font)
+  # 'Normal Font' is the ASCII glyph font; 'Non Ascii Font' is used for
+  # CJK + box-drawing + icons. Setting both to the Nerd Font avoids glyph
+  # fallback mid-line (which makes prompt arrows / git-status icons jump).
+  %w[Normal\ Font Non\ Ascii\ Font].each do |key|
+    run %( /usr/libexec/PlistBuddy -c "Set :'New Bookmarks':#{index}:'#{key}' '#{font}'" "#{ITERM_PLIST}" 2>/dev/null ||
+           /usr/libexec/PlistBuddy -c "Add :'New Bookmarks':#{index}:'#{key}' string '#{font}'" "#{ITERM_PLIST}" )
+  end
 end
 
 def iTerm_available_themes
