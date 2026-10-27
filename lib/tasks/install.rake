@@ -186,12 +186,21 @@ def run_bundle_config
 end
 
 def install_rvm_binstubs
+  # Only applies to machines that have RVM. Without this guard, `$rvm_path`
+  # expands to empty and the chmod blows up with "chmod: /hooks/after_cd_bundler:
+  # No such file or directory" on every lingti-code install — RVM isn't a
+  # prerequisite for anything else here, so skip silently when it's missing.
+  hook = File.expand_path('~/.rvm/hooks/after_cd_bundler')
+  unless File.exist?(hook)
+    puts 'RVM not installed — skipping RVM Bundler hook.'
+    return
+  end
   puts '======================================================'
   puts 'Installing RVM Bundler support. Never have to type'
   puts 'bundle exec again! Please use bundle --binstubs and RVM'
   puts "will automatically use those bins after cd'ing into dir."
   puts '======================================================'
-  run %( chmod +x $rvm_path/hooks/after_cd_bundler )
+  run %( chmod +x "#{hook}" )
   puts
 end
 
