@@ -9,6 +9,7 @@ INSTALL_STEPS = [
   { name: 'iterm2',        desc: 'iTerm2 (macOS terminal)',        platform: :macos },
   { name: 'fonts',         desc: 'JetBrainsMono Nerd Font / Powerline fallback' },
   { name: 'term_theme',    desc: 'iTerm2 solarized theme',         platform: :macos },
+  { name: 'iterm_font',    desc: 'Bind iTerm2 profiles to Nerd Font (if not already)', platform: :macos },
   { name: 'link_files',    desc: 'Symlink config files' },
   { name: 'ohmyzsh',       desc: 'ZSH / oh-my-zsh setup' },
   { name: 'spacevim',      desc: 'SpaceVim (Neovim) setup' },
@@ -48,6 +49,7 @@ def run_step(name)
   when 'qshell'        then Rake::Task['install_qshell'].execute
   when 'fonts'         then install_fonts
   when 'term_theme'    then install_term_theme
+  when 'iterm_font'    then install_iterm_font
   when 'bundle_config' then run_bundle_config
   end
 end
