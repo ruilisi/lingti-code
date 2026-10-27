@@ -17,6 +17,20 @@ fi
 REPO="https://github.com/ruilisi/lingti-code.git"
 INSTALL_DIR="$HOME/.lingti"
 
+# Suppress every interactive Homebrew prompt in this install run and all
+# sub-processes rake spawns. `HOMEBREW_ASK=` is the main offender —
+# recent brew versions prompt "Do you want to proceed? [y/n]" for any
+# multi-formula install when it's set to a truthy value (default behavior
+# on fresh macOS Monterey+). `NO_ENV_HINTS`/`NO_INSTALL_CLEANUP`/
+# `NO_AUTO_UPDATE` cut noise and small decision prompts; `NONINTERACTIVE`
+# also makes the Homebrew installer (invoked via curl later) skip its
+# "press RETURN to continue" dialog.
+export HOMEBREW_ASK=
+export HOMEBREW_NO_ENV_HINTS=1
+export HOMEBREW_NO_INSTALL_CLEANUP=1
+export HOMEBREW_NO_AUTO_UPDATE=1
+export NONINTERACTIVE=1
+
 # Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
