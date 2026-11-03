@@ -1,233 +1,289 @@
 # Command Shortcuts Reference
 
-Complete shell command aliases and functions for Lingti configuration.
+A compact cheat sheet for shell commands provided by lingti-code. The
+full alias dictionary with every oh-my-zsh entry lives in
+[docs/ALIASES.md](ALIASES.md); this file is the "most-reached-for"
+subset grouped by task.
 
-**Note:** Some commands may be OS-specific. Marked with:
-- `[macOS]` - macOS only
-- `[Linux]` - Linux only
-- `[All]` - Works on all platforms
+Platform tags: `[macOS]` macOS only · `[Linux]` Linux only · everything
+else works on both.
 
 ---
 
 # 1. Git
 
-Lingti will take over your `~/.gitconfig`. Store your git username and other settings in `~/.gitconfig.user`. Set environment variables in `~/.secrets`.
+Lingti takes over `~/.gitconfig`. Store your name/email in
+`~/.gitconfig.user`, secrets in `~/.secrets`. Shortcuts below come from
+the oh-my-zsh `git` plugin unless marked **_lingti_** (defined in
+`zsh/git.zsh`, `zsh/github-account.zsh`, or `zsh/functions.zsh`).
 
-## 1.1 Basic Operations
+> **Migration note (2026-01):** moved from Prezto to oh-my-zsh. Six
+> aliases silently changed meaning: `grs` (reset → **restore**), `grb`
+> (recent-branches → **rebase**), `gra` (rebase --abort → **remote add**),
+> `gap` (add -p → **apply**), `gam` (amend → **am**), `gs` (status →
+> **unaliased**; use `gst`).
 
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `ga` | `git add` | Stage files |
-| `gc` | `git commit --verbose` | Commit with diff |
-| `gd` | `git diff` | Show changes |
-| `gl` | `git log` | View history |
-| `gco` | `git checkout` | Switch branches/restore files |
+## 1.1 Basic
 
-## 1.2 Branch Operations
+| Command | Expands to |
+|---------|-----------|
+| `gst` | `git status` |
+| `ga` / `gaa` | `git add` / `git add --all` |
+| `gc` | **_lingti_** gitauthor-aware `git commit --verbose` |
+| `gcmsg "msg"` | `git commit -m "msg"` |
+| `gcam "msg"` | `git commit --all --message "msg"` |
+| `gd` / `gds` | `git diff` / `git diff --staged` |
+| `glog` | `git log --oneline --decorate --graph` |
+| `gsh` | `git show` |
 
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `gb` | `git branch` | List branches |
-| `gbc` / `gnb` | `git checkout -b` | Create new branch |
-| `gbs` | `git show-branch` | Show branch history |
+## 1.2 Branch
 
-## 1.3 Remote Operations
+| Command | Expands to |
+|---------|-----------|
+| `gb` / `gba` | `git branch` / `git branch --all` |
+| `gco <br>` | `git checkout` |
+| `gcb <br>` | `git checkout -b` |
+| `gswm` | `git switch $(git_main_branch)` |
+| `gbd <br>` / `gbD <br>` | delete / force-delete |
+| `gbg` | List local branches whose upstream is gone |
+| `gbgd` | Delete every "gone" local branch |
 
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `gf` | `git fetch` | Fetch from remote |
-| `gfc` | `git clone` | Clone repository |
-| `gfm` | `git pull` | Pull changes |
-| `gfr` | `git pull --rebase` | Pull with rebase |
-| `gpc` | `git push --set-upstream origin "$(git-branch-current)"` | Push current branch |
+## 1.3 Remote (fetch / pull / push)
 
-## 1.4 Rebase Operations
+| Command | Expands to |
+|---------|-----------|
+| `gf` / `gfa` | `git fetch` / `git fetch --all --tags --prune --jobs=10` |
+| `gl` | `git pull` |
+| `gpr` / `gpra` | `git pull --rebase` / with `--autostash` |
+| `gp` | `git push` |
+| `gpf` | `git push --force-with-lease --force-if-includes` (safer than `--force`) |
+| `gpf!` | `git push --force` (dangerous) |
+| `gpsup` | `git push --set-upstream origin $(git_current_branch)` |
+| `gpoat` | `git push origin --all && git push origin --tags` |
 
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `gr` | `git rebase` | Rebase branch |
-| `gra` | `git rebase --abort` | Abort rebase |
-| `grc` | `git rebase --continue` | Continue rebase |
-| `grs` | `git rebase --skip` | Skip current commit |
-| `gcp` | `git cherry-pick --ff` | Cherry pick commit |
+## 1.4 Rebase / merge / cherry-pick
 
-## 1.5 Stash Operations
+| Command | Expands to |
+|---------|-----------|
+| `grb` | `git rebase` |
+| `grba` / `grbc` / `grbs` | `--abort` / `--continue` / `--skip` |
+| `grbi <ref>` | `git rebase --interactive` |
+| `grbm` / `grbom` | rebase onto main / origin/main |
+| `gm` / `gma` / `gmc` | `git merge` / `--abort` / `--continue` |
+| `gmom` | `git merge origin/$(git_main_branch)` |
+| `gcp` / `gcpa` / `gcpc` | cherry-pick / abort / continue |
 
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `gst` | `git stash` | Stash changes |
-| `gsp` | `git stash pop` | Pop stash |
-| `gsl` | `git stash list` | List stashes |
-| `gsd` | `git stash drop` | Drop stash |
+## 1.5 Stash
 
-## 1.6 Tag Operations
+| Command | Expands to |
+|---------|-----------|
+| `gsta` | `git stash push` |
+| `gstp` | `git stash pop` |
+| `gstpu` | `git stash push -u` (include untracked) |
+| `gstl` | `git stash list` |
+| `gstd` | `git stash drop` |
+| `gstaa` | `git stash apply` |
+| `gsts` | `git stash show --patch` |
+| `gstc` | `git stash clear` |
 
-| Command | Description |
-|---------|-------------|
-| `git_tag_add` | Add GitHub tag |
-| `git_tag_delete` | Delete GitHub tag |
+## 1.6 Reset / restore / clean
+
+| Command | Expands to |
+|---------|-----------|
+| `grh` / `grhh` / `grhs` | `git reset` / `--hard` / `--soft` |
+| `grs` / `grst` | `git restore` / `--staged` |
+| `gclean` | `git clean --interactive -d` |
+| `gpristine` | `git reset --hard && git clean -dffx` |
+
+## 1.7 Tags / submodules / worktrees
+
+| Command | Expands to |
+|---------|-----------|
+| `git_tag_add <tag>` | **_lingti_** create tag + push to origin |
+| `git_tag_delete <tag>` | **_lingti_** delete tag locally + on origin |
+| `gsi` / `gsu` | submodule `init` / `update` |
+| `git-change-module-remote <sub> <url>` | **_lingti_** rewrite a submodule's remote |
+| `gwt` / `gwta` / `gwtls` / `gwtrm` | worktree / add / list / remove |
+
+## 1.8 Lingti-only additions
+
+| Name | What it does |
+|------|-------------|
+| `gpr-all [DIR]` | `git pull --rebase --autostash` in every immediate subdir repo |
+| `gfr_key <key>` | fetch+rebase using a specific SSH key |
+| `gpc_key <key>` | push current branch using a specific SSH key |
+| `ghuse [alias]` | per-repo GitHub identity switch (user.email + remote host alias). `-g` → global. Outside a repo → shell env vars for cloning. |
+| `ghuse-clear` | drop the env vars set by `ghuse` outside a repo |
+| `ghpush <alias> [remote]` | one-shot push using a specific account's SSH key |
+| `git_rebase_to_origin [branch]` | rebase current onto `origin/<branch>` |
 
 ---
 
 # 2. File Operations
 
-## 2.1 File Management
+## 2.1 Listing
 
-| Command | Args | Description |
-|---------|------|-------------|
-| `swap` | `FILE1 FILE2` | Swap two files |
+| Command | Expands to |
+|---------|-----------|
+| `ll` | `ls -alGh` [macOS] / `ls -alh --color=auto` [Linux] |
+| `lh` | `ls -alt \| head` |
+| `lsg` | `ll \| grep` |
+| `ls_folder_size` | `du -sch .[!.]* * \| sort -h` |
+| `find_large_files` | `sudo find / -xdev -type f -size +50M` |
 
-## 2.2 Replace (Text Substitution)
+## 2.2 Content
 
-The `Replace` command performs recursive text replacement in files.
-
-**Usage:** `Replace [options]`
-
-| Option | Description |
-|--------|-------------|
-| `-f` | File regex pattern |
-| `-s` | Source pattern |
-| `-d` | Destination pattern |
-| `-r` | Remove line |
-| `--regex` | Match pattern with regex |
-| `--seperator=` | Separator (`#` by default) |
-| `-h` | Display help message |
+| Command | Description |
+|---------|-------------|
+| `less` | `less -r` (raw control chars) |
+| `tf <file>` | `tail -f` |
+| `l` | `less` |
+| `gz <path>` | `tar -zcvf` |
 
 ---
 
 # 3. Navigation (fasd)
 
-[fasd](https://github.com/clvv/fasd) provides quick access to frequently used files and directories.
+Wired by `zsh/fasd.zsh` — needs `fasd` on PATH. All functions below are
+provided by fasd; the single-letter aliases are **_lingti_**.
 
-## 3.1 Basic Commands
+## 3.1 Basic
 
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `a` | `fasd -a` | Any (files/directories) |
-| `s` | `fasd -si` | Show / search / select |
-| `d` | `fasd -d` | Directory |
-| `f` | `fasd -f` | File |
+| Command | Expands to |
+|---------|-----------|
+| `a` / `s` | any / show-search-select |
+| `d` / `f` | recent directory / file |
+| `z <query>` | `cd` to best-matching recent directory |
+| `zz` | interactive directory jump |
+| `v <query>` | open best-matching recent file in vim |
 
-## 3.2 Interactive Selection
-
-| Command | Expands To | Description |
-|---------|------------|-------------|
-| `sd` | `fasd -sid` | Interactive directory selection |
-| `sf` | `fasd -sif` | Interactive file selection |
-| `z` | `fasd_cd -d` | cd (like autojump's `j`) |
-| `zz` | `fasd_cd -d -i` | cd with interactive selection |
-
-## 3.3 Examples
+## 3.2 Examples
 
 ```sh
-v def conf       =>  vim /some/awkward/path/to/type/default.conf
-j abc            =>  cd /hell/of/a/awkward/path/to/get/to/abcdef
-m movie          =>  mplayer /whatever/whatever/whatever/awesome_movie.mp4
-o eng paper      =>  xdg-open /you/dont/remember/where/english_paper.pdf
+v def conf       =>  vim /some/awkward/path/to/default.conf
+z abc            =>  cd /hell/of/a/awkward/path/to/abcdef
 vim `f rc lo`    =>  vim /etc/rc.local
-vim `f rc conf`  =>  vim /etc/rc.conf
 mv update.html `d www`
 cp `f mov` .
 ```
 
 ---
 
-# 4. Network
+# 4. Proxy
 
-| Command | Args | Description | OS |
-|---------|------|-------------|-----|
-| `test-port` | `PORT` | Test whether PORT is opened | All |
-| `intercept-request-hosts` | - | Intercept requests and show hosts | All |
-| `host-ip` | - | Show host IP of your system | All |
-
----
-
-# 5. Proxy
+Functions from `zsh/proxy.zsh`. Matching tmux bindings in
+[docs/tmux-keymaps.md](tmux-keymaps.md): `PRE C-p` default 8668, `PRE @`
+prompt for port, `PRE C-x` off.
 
 | Command | Description |
 |---------|-------------|
-| `set_proxy` | Set terminal proxy using HTTP proxy |
-| `set_vagrant_proxy` | Set terminal proxy using Vagrant HTTP proxy |
-| `set_ss_proxy` | Set terminal proxy using SOCKS proxy |
-| `unset_proxy` | Cancel all proxy settings |
+| `proxy` | Interactive. Pop up current port (default 8668) to edit |
+| `proxy <port>` | Set directly |
+| `proxy off` | Unset |
+| `proxy status` | Show state |
+| `set_proxy [port]` | Underlying setter (HTTP, default 8668) |
+| `set_ss_proxy [port]` | SOCKS5 version (default 1080) |
+| `unset_proxy` | Clear all proxy env vars |
+
+---
+
+# 5. Docker & Kubernetes
+
+Oh-my-zsh's `docker` plugin is **not** loaded. Only the three convenience
+wrappers below exist; everything else uses raw `docker` / `kubectl`.
+
+## 5.1 Docker
+
+| Command | Description |
+|---------|-------------|
+| `docker-clean` | `docker container prune -f` |
+| `docker_purge` | Stop and remove every container |
+| `docker_restart_in_mac` | `killall Docker && open /Applications/Docker.app` [macOS] |
+
+## 5.2 Kubernetes (`zsh/k8s.zsh`)
+
+| Command | Description |
+|---------|-------------|
+| `k` / `kpg` / `ksg` | `kubectl` / `kubectl get pods \| grep` / `kubectl get svc \| grep` |
+| `kexec -p <project> -n <ns>` | Exec a shell inside a matching pod |
+| `kcp -p <project> -s <src> -d <dst>` | Copy a file from a matching pod |
+| `klogs` | Tail logs |
+| `ktail <instance> <file>` | Tail a file across every matching pod |
+| `kdown <instance> <path> <dir>` | Download a file from every matching pod |
+| `k_force_delete_pod <pod>` | Force delete |
+| `k_delete_evicted` | Delete evicted pods |
 
 ---
 
 # 6. System
 
-## 6.1 Script Helpers
+## 6.1 Process
 
 | Command | Description |
 |---------|-------------|
-| `yell` | Print script name and all arguments to stderr |
-| `die` | Same as yell, but exits with non-0 status (fail) |
-| `try` | Uses `\|\|` (boolean OR), only evaluates right side if left fails |
+| `k9 <pid>` | `kill -9` |
+| `ka9 <name>` | `killall -9` |
+| `pp <name>` | grep processes matching `<name>` |
+| `po <pid>` | print `/proc/<pid>/{stdout,stderr}` |
+| `top_by_memory` | `top -o %MEM` |
 
-## 6.2 File System
-
-| Command | Args | Description |
-|---------|------|-------------|
-| `list-large-files` | `DIR` | List large files sorted by size (KB, MB, GB) |
-
----
-
-# 7. String
-
-| Command | Args | Description |
-|---------|------|-------------|
-| `random-hex` | - | Print random hex string |
-| `random-string` | - | Print random string of `a-zA-Z0-9` |
-| `contains` | `str1 str2 ... target` | Test if target is in string array |
-
----
-
-# 8. Docker & Kubernetes
-
-## 8.1 Docker
+## 6.2 Vim / zsh / lingti
 
 | Command | Description |
 |---------|-------------|
-| `dc` | Alias for `docker-compose` |
-| `docker_rm_all` | Delete all docker images |
+| `vim` | `nvim` (lingti alias) |
+| `vim_plain` | `vim -u NONE` |
+| `ae` | Edit `aliases.zsh` |
+| `ze` | Edit `~/.zshrc` |
+| `ve` | Edit `~/.vimrc` |
+| `ss` | `source ~/.zshrc` (reload current shell) |
+| `gar` | Reload every running zsh (`killall -HUP -u $USER zsh`) |
 
-## 8.2 Kubernetes
-
-| Command | Description |
-|---------|-------------|
-| `kexec` | Execute k8s pod by regex pod name |
-| `klogs` | Show k8s pod log by regex pod name |
-| `ktail <instance> <file>` | Tail file across all pods of an instance |
-| `kdown <instance> <path> <dir>` | Download file from all pods of an instance |
-| `gitr <git-args>` | Run git command across all repos in current dir |
-| `gitcopy [commit] [-n count]` | Format git commits as markdown, copy to clipboard |
-| `qup <file> [-b bucket] [-k key] [-t]` | Upload file to Qiniu cloud |
-
----
-
-# 9. Process & HTTP
-
-| Command | Args | Description |
-|---------|------|-------------|
-| `pp` | `NAME` | Grep process by name (`pp nginx`) |
-| `post` | `URL DATA` | curl POST with `application/json` |
-
----
-
-# 10. Shell & Config
+## 6.3 Homebrew
 
 | Command | Description |
 |---------|-------------|
-| `secure_source` | Source `~/.lingti/zsh/function.zsh` to apply changes immediately |
-| `ae` | Edit aliases |
-| `ar` | Reload aliases |
+| `brewu` | `brew update && upgrade && cleanup && doctor` |
 
 ---
 
-# Appendix: Source Files
+# 7. HTTP / network
 
-| Category | Source File |
-|----------|-------------|
-| Files | `~/.lingti/zsh/files.zsh` |
-| Functions | `~/.lingti/zsh/function.zsh` |
-| Git | `~/.oh-my-zsh/plugins/git/git.plugin.zsh` |
-| fasd | `~/.oh-my-zsh/plugins/fasd/fasd.plugin.zsh` |
+| Command | Description |
+|---------|-------------|
+| `chrome_proxy` | Chrome launched with `--proxy-server=http://127.0.0.1:8118` |
+| `chrome-cdp` | Chrome with remote debugging port 9222 [macOS] |
+| `ssh_by_password` | Force password-only SSH |
+| `ssh_copy_id` | `ssh-copy-id -o PreferredAuthentications=password …` |
+| `post <url> <data>` | `curl -X POST -H application/json` |
+
+---
+
+# 8. Global aliases
+
+Expand mid-command — handy for piping without typing `|`.
+
+| Alias | Expands to | Example |
+|-------|------------|---------|
+| `G` | `\| grep` | `ls foo G bar` |
+| `L` | `\| less` | `history L` |
+| `H` | `\| head` | `cat big.log H` |
+| `S` | `\| sort` | `ls S` |
+| `C` | `\| wc -l` | `ls C` |
+| `N` | `> /dev/null` | `noisy N` |
+
+---
+
+# Appendix: Source files
+
+| What | Where |
+|------|-------|
+| Core lingti aliases | `~/.lingti/zsh/aliases.zsh` |
+| macOS-only aliases | `~/.lingti/zsh/aliases-darwin.zsh` |
+| Lingti git additions | `~/.lingti/zsh/git.zsh`, `zsh/github-account.zsh`, `zsh/functions.zsh` |
+| fasd integration | `~/.lingti/zsh/fasd.zsh` (not an omz plugin) |
+| Proxy functions | `~/.lingti/zsh/proxy.zsh` |
+| Kubernetes helpers | `~/.lingti/zsh/k8s.zsh` |
+| Oh-my-zsh git plugin (~210 aliases) | `~/.oh-my-zsh/plugins/git/git.plugin.zsh` |
+| Oh-my-zsh macos plugin | `~/.oh-my-zsh/plugins/macos/macos.plugin.zsh` |
+| Oh-my-zsh ssh-agent plugin | `~/.oh-my-zsh/plugins/ssh-agent/ssh-agent.plugin.zsh` |
