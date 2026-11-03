@@ -13,7 +13,6 @@ in `zsh/zshrc`.
 ## Table of Contents
 
 - [Quick Reference](#quick-reference)
-- [Prompt Toggle](#prompt-toggle)
 - [Lingti Management](#lingti-management)
 - [Navigation](#navigation)
 - [File Listing](#file-listing)
@@ -47,19 +46,6 @@ The ten aliases you'll reach for most often:
 | `gd` | `git diff` | What's different in the worktree |
 | `glog` | `git log --oneline --decorate --graph` | Quick history view |
 | `gpr-all` | run `git pull --rebase` in every immediate subdir repo | _lingti_ — sync a workspace |
-
----
-
-## Prompt Toggle
-
-Driven by oh-my-zsh's `agnoster` theme — toggles live in `zsh/zsh-aliases.zsh`.
-
-| Alias | Command | Description |
-|-------|---------|-------------|
-| `show_username` | `SHOW_USERNAME=1; prompt_setup` | Show username in prompt |
-| `hide_username` | `SHOW_USERNAME=0; prompt_setup` | Hide username (default) |
-| `show_kcontext` | `SHOW_KCONTEXT=1; prompt_setup` | Show kubernetes context |
-| `hide_kcontext` | `SHOW_KCONTEXT=0; prompt_setup` | Hide kubernetes context (default) |
 
 ---
 
@@ -217,7 +203,8 @@ oh-my-zsh git plugin is at `~/.oh-my-zsh/plugins/git/git.plugin.zsh`.
 | `gstd` | `git stash drop` |
 | `gstl` | `git stash list` |
 | `gstp` | `git stash pop` |
-| `gstpu` | `git stash push -u` (include untracked) |
+| `gstu` | `git stash push --include-untracked` |
+| `gstall` | `git stash --all` |
 | `gsts` | `git stash show --patch` |
 
 ### Rebase, merge, cherry-pick
@@ -262,7 +249,7 @@ oh-my-zsh git plugin is at `~/.oh-my-zsh/plugins/git/git.plugin.zsh`.
 | `gr` | `git remote` |
 | `gra` | `git remote add` |
 | `grrm` | `git remote remove` |
-| `grrn` | `git remote rename` |
+| `grmv` | `git remote rename` |
 | `grset` | `git remote set-url` |
 | `grup` | `git remote update` |
 

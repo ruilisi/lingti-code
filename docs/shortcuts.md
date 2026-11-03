@@ -79,7 +79,7 @@ the oh-my-zsh `git` plugin unless marked **_lingti_** (defined in
 |---------|-----------|
 | `gsta` | `git stash push` |
 | `gstp` | `git stash pop` |
-| `gstpu` | `git stash push -u` (include untracked) |
+| `gstu` | `git stash push --include-untracked` |
 | `gstl` | `git stash list` |
 | `gstd` | `git stash drop` |
 | `gstaa` | `git stash apply` |

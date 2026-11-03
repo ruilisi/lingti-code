@@ -84,7 +84,7 @@ cd ~/.lingti && git pull --rebase && rake update
 
 ### Git
 
-- Hundreds of aliases (`ga`, `gc`, `gd`, `gfr`, `gpr-all` to rebase every subdirectory repo)
+- Hundreds of aliases (`gst`, `gaa`, `gcmsg`, `gpr`, `gpra`, plus lingti-only `gpr-all` to rebase every subdirectory repo). See [docs/ALIASES.md](docs/ALIASES.md) for the full list
 - `ghuse <alias>` — per-repo GitHub account switcher (sets `user.name/email` + rewrites remote URL to the right SSH host alias); `ghuse -g` for the global default
 - Conventional-commits enforcement via commitlint + Husky
 

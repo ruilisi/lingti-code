@@ -11,5 +11,10 @@
 ### Alias Management
 | Keymap | Action | Mode |
 |--------|--------|------|
-| `ae` | Edit aliases | Zsh |
-| `ar` | Reload aliases | Zsh |
+| `ae` | Edit `aliases.zsh` in vim | Zsh |
+| `ze` | Edit `~/.zshrc` in vim | Zsh |
+| `ve` | Edit `~/.vimrc` in vim | Zsh |
+| `ss` | `source ~/.zshrc` in the current shell | Zsh |
+| `gar` | Reload every running zsh (`killall -HUP -u $USER zsh`) | Zsh |
+
+See [ALIASES.md](ALIASES.md) and [shortcuts.md](shortcuts.md) for the full command dictionary.

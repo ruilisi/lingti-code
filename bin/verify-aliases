@@ -1,0 +1,96 @@
+#!/usr/bin/env zsh
+# verify-aliases — fail if docs/ALIASES.md or docs/shortcuts.md describe
+# an alias that doesn't exist in the current shell. Catches doc drift the
+# next time someone swaps a plugin.
+#
+# Usage: bin/verify-aliases
+# Exit:  0 clean, 1 drift found.
+
+set -o pipefail
+
+REPO="${0:A:h:h}"
+DOCS=("$REPO/docs/ALIASES.md" "$REPO/docs/shortcuts.md")
+
+# Pull every known shell symbol once — aliases, functions, builtins,
+# and commands on PATH — into one hash. All subsequent lookups are O(1).
+typeset -A LIVE
+while IFS= read -r name; do
+  [[ -z "$name" ]] && continue
+  LIVE[$name]=1
+done < <(zsh -ic '
+  alias     | awk -F= "{print \$1}"
+  print -l ${(k)functions}
+  print -l ${(k)builtins}
+  print -l ${(k)commands}
+' 2>/dev/null)
+
+# Doc-only noise words — tokens that look like aliases but aren't ones
+# we claim exist. Includes placeholder/arg words from example rows,
+# generic command names, env vars, and oh-my-zsh helper names used in
+# expansion columns rather than as aliases themselves.
+typeset -a IGNORE=(
+  # placeholders
+  foo bar baz TARGET URL DATA DIR FILE PORT NAME PID src dst ns msg
+  pattern file commit tag path dir bucket key branch instance ref
+  key_path remote alias ctx query level sub arg project
+  # tokens that appear in example columns, not as aliases to verify
+  git ag fasd grep head less sort wc tail dirstack cd mkdir rmdir
+  killall ssh scp sudo xargs rake rspec rubocop rails spring thin mongrel zeus
+  kubectl docker docker-compose brew curl bun yarn npm pnpm
+  nvim vim open code chrome google-chrome
+  tar sed awk ls cat echo find mv cp rm chmod chown
+  make bash sh zsh python ruby node go rust cargo pip pandoc fpp
+  ssh-copy-id ssh-add
+  # env vars, not aliases
+  http_proxy https_proxy GIT_SSH_COMMAND SHOW_USERNAME SHOW_KCONTEXT
+  LINGTI_INSTALLER_URL LANG
+  # oh-my-zsh helper functions used in RHS columns
+  git_main_branch git_current_branch prompt_setup fasd_cd
+  # oh-my-zsh expansion names users don't type directly
+  gpc_key gfr_key
+  # single-letter global aliases documented separately
+  G L H S C N
+  # markdown artifacts
+  br sub ref msg
+  # oh-my-zsh plugin names (referenced in prose, not aliases)
+  macos ssh-agent zsh-syntax-highlighting zsh-history-substring-search
+  # git subcommand keywords referenced inside expansion columns
+  HEAD init update build origin status reset restore stash
+  # file name mentions
+  aliases.zsh
+  # dropped-alias annotations: `gs` is explicitly removed; we document that
+  gs
+  # counter-example aliases named in prose to say "these are NOT loaded"
+  # (the omz docker plugin is intentionally off)
+  dps dstop
+)
+typeset -A IGNORE_H
+for w in "${IGNORE[@]}"; do IGNORE_H[$w]=1; done
+
+HITS=0 MISSES=0 FAIL=0
+typeset -A SEEN
+
+for doc in "${DOCS[@]}"; do
+  [[ -r "$doc" ]] || continue
+  while IFS= read -r token; do
+    [[ -z "$token" ]] && continue
+    [[ -n "${SEEN[$token]}" ]] && continue
+    [[ -n "${IGNORE_H[$token]}" ]] && continue
+    SEEN[$token]=1
+
+    if [[ -n "${LIVE[$token]}" ]]; then
+      HITS=$((HITS + 1))
+    else
+      echo "drift: \`$token\` not found in current shell  ($doc)"
+      MISSES=$((MISSES + 1))
+      FAIL=1
+    fi
+  done < <(
+    # Backtick-wrapped identifiers that look like shell commands.
+    grep -oE '`[A-Za-z_][A-Za-z0-9_:!.-]*`' "$doc" \
+      | tr -d '`' | sort -u
+  )
+done
+
+printf 'verify-aliases: %d live, %d missing\n' $HITS $MISSES
+exit $FAIL
